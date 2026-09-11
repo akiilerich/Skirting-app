@@ -1,7 +1,7 @@
 {
-  "name": "Skirting Cutting List",
-  "short_name": "Skirting",
-  "description": "Measure a room wall by wall, review the floor plan, and get a saw-ready skirting cutting list.",
+  "name": "Carpentry App",
+  "short_name": "Carpentry",
+  "description": "A home for site tools: architrave cut calculator, skirting cutting list, and more to come.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",

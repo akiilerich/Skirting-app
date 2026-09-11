@@ -3,15 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
-<title>Skirting Cutting List</title>
-<link rel="manifest" href="manifest.json">
+<title>Architrave Cut Calculator</title>
 <meta name="theme-color" content="#0b0d10">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Skirting">
-<link rel="icon" href="icon-192.png">
-<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-title" content="Architrave">
+<link rel="icon" href="../icon-192.png">
+<link rel="apple-touch-icon" href="../icon-192.png">
 <style>
   :root{
     --bg:#0b0d10;
@@ -23,8 +22,6 @@
     --muted:#8b93a1;
     --accent:#4fd1c5;
     --accent-2:#5b8cff;
-    --warn:#f5b342;
-    --coped:#a78bfa;
     --danger:#ff6b6b;
   }
   *{box-sizing:border-box;}
@@ -32,540 +29,434 @@
   body{
     background:var(--bg);
     color:var(--text);
-    font-family:'Inter','Segoe UI',system-ui,-apple-system,sans-serif;
+    font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
     min-height:100vh;
-    padding:20px 16px 60px;
+    padding:24px 18px 60px;
   }
   .wrap{max-width:480px;margin:0 auto;}
 
-  header{
-    display:flex; align-items:flex-start; justify-content:space-between;
-    gap:10px; margin-bottom:16px;
+  header{margin-bottom:20px;}
+  .eyebrow{
+    font-size:11px;
+    letter-spacing:.16em;
+    text-transform:uppercase;
+    color:var(--accent);
+    font-weight:600;
+    margin:0 0 8px;
   }
-  .eyebrow{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);font-weight:600;margin:0 0 6px;}
-  h1{font-weight:700;font-size:23px;line-height:1.2;letter-spacing:-0.02em;margin:0 0 6px;color:var(--text);}
-  .sub{font-size:12.5px;color:var(--muted);line-height:1.45;margin:0;}
-  .gear-btn{
-    flex-shrink:0;
-    width:38px;height:38px;border-radius:10px;
-    background:var(--panel);border:1px solid var(--line);
-    color:var(--muted); font-size:17px;
-    display:flex;align-items:center;justify-content:center;
-    cursor:pointer;
+  h1{
+    font-weight:700;
+    font-size:26px;
+    line-height:1.2;
+    letter-spacing:-0.02em;
+    margin:0 0 8px;
+    color:var(--text);
   }
-  .gear-btn.active{color:var(--accent);border-color:var(--accent);}
+  .sub{
+    font-size:13.5px;
+    color:var(--muted);
+    line-height:1.5;
+    margin:0;
+  }
+
+  .switch-row{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:14px 16px;
+    margin:20px 0;
+  }
+  .switch-label{font-size:14px;font-weight:600;color:var(--text);}
+  .switch-label .desc{display:block;font-size:12px;font-weight:400;color:var(--muted);margin-top:2px;}
+  .toggle{position:relative;width:50px;height:28px;flex-shrink:0;margin-left:14px;}
+  .toggle input{opacity:0;width:0;height:0;}
+  .toggle .slider{position:absolute;cursor:pointer;inset:0;background:#2a2f38;border-radius:999px;transition:.2s;border:1px solid var(--line);}
+  .toggle .slider:before{content:"";position:absolute;height:20px;width:20px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.2s;}
+  .toggle input:checked + .slider{background:linear-gradient(90deg,var(--accent-2),var(--accent));border-color:transparent;}
+  .toggle input:checked + .slider:before{transform:translateX(22px);}
+
+  .diagram{
+    display:flex;
+    align-items:center;
+    gap:16px;
+    margin:20px 0;
+    padding:16px;
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:14px;
+  }
+  .diagram svg{flex-shrink:0;}
+  .diagram-legend{font-size:12px;color:var(--muted);line-height:1.9;}
+  .diagram-legend .dot{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:7px;}
+  .diagram-legend .rule{color:#5c6472;font-size:11px;margin-top:2px;}
 
   section.card{
     background:var(--panel);
     border:1px solid var(--line);
     border-radius:14px;
-    padding:18px 16px;
+    padding:20px 18px;
     margin-bottom:14px;
   }
   .card h2{
-    font-size:11px;letter-spacing:.14em;text-transform:uppercase;
-    color:var(--muted);font-weight:600;margin:0 0 14px;
-    display:flex; justify-content:space-between; align-items:center;
+    font-size:11px;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    color:var(--muted);
+    font-weight:600;
+    margin:0 0 16px;
   }
-  .card h2 .hint{text-transform:none;letter-spacing:0;font-size:11px;font-weight:400;}
+  .card h2 .hint{text-transform:none;letter-spacing:0;font-size:11px;}
 
-  /* settings panel */
-  #settingsPanel{display:none;}
-  .field{margin-bottom:14px;}
+  .side-block{margin-bottom:18px;}
+  .side-block:last-child{margin-bottom:0;}
+  .side-title{
+    font-size:12px;
+    font-weight:700;
+    color:var(--accent);
+    text-transform:uppercase;
+    letter-spacing:.1em;
+    margin:0 0 12px;
+    padding-top:14px;
+    border-top:1px solid var(--line);
+  }
+  .side-block:first-child .side-title{padding-top:0;border-top:none;}
+
+  .field{margin-bottom:16px;}
   .field:last-child{margin-bottom:0;}
-  .field label{display:block;font-size:13px;color:var(--text);margin-bottom:6px;font-weight:500;}
-  .field .hint{color:var(--muted);font-weight:400;font-size:11.5px;}
+  .field label{display:block;font-size:13.5px;color:var(--text);margin-bottom:7px;font-weight:500;}
+  .field .hint{color:var(--muted);font-weight:400;font-size:12px;}
   .input-row{
-    display:flex;align-items:center;background:var(--bg);
-    border:1px solid var(--line);border-radius:10px;overflow:hidden;
-    transition:border-color .15s;
-  }
-  .input-row:focus-within{border-color:var(--accent);}
-  .input-row input{
-    flex:1;background:transparent;border:none;outline:none;color:var(--text);
-    font-size:17px;font-weight:600;padding:12px 13px;-webkit-appearance:none;
-    font-variant-numeric: tabular-nums;
-  }
-  .input-row input.text-input{font-size:15px;font-variant-numeric:normal;}
-  .unit{
-    padding:0 13px;font-size:11.5px;font-weight:600;color:var(--muted);
-    border-left:1px solid var(--line);align-self:stretch;display:flex;align-items:center;
-  }
-
-  .btn{
-    padding:11px 15px;border-radius:10px;border:1px solid var(--line);
-    background:var(--panel-2);color:var(--text);font-size:13px;font-weight:600;
-    cursor:pointer; white-space:nowrap;
-  }
-  .btn.primary{background:linear-gradient(90deg,var(--accent-2),var(--accent));border-color:transparent;color:#0b0d10;}
-  .btn.ghost{background:transparent;color:var(--accent);border:1px dashed var(--line);}
-  .btn.danger-ghost{background:transparent;color:var(--danger);border:1px solid var(--line);}
-  .btn:disabled{opacity:.35;cursor:default;}
-  .btn:active:not(:disabled){opacity:.8;}
-  .btn-row{display:flex;gap:8px;flex-wrap:wrap;}
-  .btn.small{padding:9px 12px;font-size:12.5px;}
-
-  .saved-list{margin-top:12px;}
-  .saved-item{
-    display:flex;justify-content:space-between;align-items:center;
-    padding:9px 11px;background:var(--bg);border:1px solid var(--line);
-    border-radius:10px;margin-bottom:7px;font-size:13px;
-  }
-  .saved-item .name{font-weight:600;}
-  .saved-item .meta{color:var(--muted);font-size:11px;margin-top:2px;}
-  .saved-item .actions{display:flex;gap:6px;}
-  .mini-btn{
-    padding:6px 9px;border-radius:8px;border:1px solid var(--line);
-    background:var(--panel-2);color:var(--text);font-size:11px;cursor:pointer;
-    white-space:nowrap;
-  }
-  .mini-btn.load{color:var(--accent);}
-  .mini-btn.del{color:var(--danger);}
-  .empty-note{color:var(--muted);font-size:12px;text-align:center;padding:4px 0;}
-
-  /* plan + entry frame */
-  .plan-wrap{
-    background:var(--bg);
-    border:1px solid var(--line);
-    border-radius:12px;
-    padding:8px;
     display:flex;
-    justify-content:center;
-    margin-bottom:14px;
-    position:relative;
-    overflow:hidden;
-  }
-  .plan-wrap svg{touch-action:none; cursor:grab; user-select:none;}
-  .plan-wrap svg.grabbing{cursor:grabbing;}
-  .fit-btn{
-    position:absolute; top:8px; right:8px;
-    background:var(--panel-2); border:1px solid var(--line); border-radius:8px;
-    color:var(--muted); font-size:11px; font-weight:600;
-    padding:6px 9px; cursor:pointer;
-  }
-  .legend{display:flex;gap:10px;flex-wrap:wrap;margin:0 0 16px;font-size:10.5px;color:var(--muted);}
-  .legend .dot{display:inline-block;width:8px;height:8px;margin-right:4px;vertical-align:middle;}
-  .legend .dot.shape-internal{border-radius:50%;background:#4fd1c5;}
-  .legend .dot.shape-external{border-radius:1px;background:#5b8cff;}
-  .legend .dot.shape-square{background:#f5b342;transform:rotate(45deg);width:7px;height:7px;}
-  .legend .dot.shape-coped{
-    width:0;height:0;background:none;
-    border-left:5px solid transparent; border-right:5px solid transparent;
-    border-bottom:8px solid #a78bfa;
-  }
-  .legend .dash{display:inline-block;width:13px;height:2px;background:repeating-linear-gradient(90deg,var(--warn) 0 4px,transparent 4px 7px);margin-right:4px;vertical-align:middle;}
-
-  .segmented{
-    display:grid;
+    align-items:center;
     background:var(--bg);
     border:1px solid var(--line);
     border-radius:10px;
     overflow:hidden;
+    transition:border-color .15s;
   }
-  .segmented.cols-3{grid-template-columns:1fr 1fr 1fr;}
-  .segmented.cols-4{grid-template-columns:1fr 1fr 1fr 1fr;}
-  .segmented.cols-2{grid-template-columns:1fr 1fr;}
-  .segmented button{
-    padding:10px 4px;border:none;background:transparent;color:var(--muted);
-    font-size:11px;font-weight:600;cursor:pointer;border-right:1px solid var(--line);
+  .input-row:focus-within{border-color:var(--accent);}
+  .input-row input{
+    flex:1;
+    background:transparent;
+    border:none;
+    outline:none;
+    color:var(--text);
+    font-size:18px;
+    font-weight:600;
+    padding:13px 14px;
+    -webkit-appearance:none;
+    font-variant-numeric: tabular-nums;
   }
-  .segmented button:last-child{border-right:none;}
-  .segmented button.active{background:var(--panel-3);color:var(--text);}
-  .segmented button[data-joint="Internal"].active{background:rgba(79,209,197,0.18);color:var(--accent);}
-  .segmented button[data-joint="Coped"].active{background:rgba(167,139,250,0.18);color:var(--coped);}
-  .segmented button[data-joint="External"].active{background:rgba(91,140,255,0.18);color:var(--accent-2);}
-  .segmented button[data-joint="Square"].active{background:rgba(245,179,66,0.18);color:var(--warn);}
-  .segmented button[data-type="Wall"].active{background:rgba(91,140,255,0.18);color:var(--accent-2);}
-  .segmented button[data-type="Opening"].active{background:rgba(245,179,66,0.18);color:var(--warn);}
-  .segmented button[data-style="Mitre"].active{background:rgba(79,209,197,0.18);color:var(--accent);}
-  .segmented button[data-style="Cope"].active{background:rgba(167,139,250,0.18);color:var(--coped);}
+  .input-row input.text-input{font-size:16px;font-variant-numeric: normal;}
+  .unit{
+    padding:0 14px;
+    font-size:12px;
+    font-weight:600;
+    color:var(--muted);
+    border-left:1px solid var(--line);
+    align-self:stretch;
+    display:flex;
+    align-items:center;
+  }
 
-  .joint-label{font-size:11.5px;color:var(--muted);margin:12px 0 6px;}
+  .piece{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:12px 0;
+    border-bottom:1px solid var(--line);
+  }
+  .piece:last-child{border-bottom:none;}
+  .piece-name{font-size:14.5px;color:var(--text);font-weight:500;}
+  .piece-vals{text-align:right;}
+  .val-row{font-size:13px;line-height:1.7;white-space:nowrap;}
+  .val-row .tag{color:var(--muted);font-size:10.5px;margin-right:8px;text-transform:uppercase;letter-spacing:.06em;}
+  .val-row.sp .num{color:var(--accent-2);font-weight:700;font-size:15px;font-variant-numeric: tabular-nums;}
+  .val-row.lp .num{color:var(--accent);font-weight:700;font-size:15px;font-variant-numeric: tabular-nums;}
 
-  .entry-actions{display:flex;gap:8px;margin-top:16px;}
-  .entry-actions .btn{flex:1;}
+  .side-subtotal{
+    display:flex;
+    justify-content:space-between;
+    font-size:12px;
+    color:var(--muted);
+    padding-top:10px;
+    margin-top:2px;
+  }
+  .side-subtotal .num{color:var(--text);font-weight:700;font-variant-numeric: tabular-nums;}
 
-  /* history rows */
-  #historyList .row-card, #cutList .row-card{
+  .total{
+    margin-top:16px;
+    padding-top:14px;
+    border-top:1px solid var(--line);
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    font-size:12.5px;
+    color:var(--muted);
+  }
+  .total .num{color:var(--text);font-weight:700;font-size:14px;font-variant-numeric: tabular-nums;}
+
+  footer{text-align:center;font-size:11px;color:#4a5160;margin-top:20px;line-height:1.7;}
+
+  #listMode{display:none;}
+  .door-card{
     background:var(--panel);
     border:1px solid var(--line);
-    border-radius:12px;
-    margin-bottom:8px;
+    border-radius:14px;
+    margin-bottom:14px;
     overflow:hidden;
   }
-  .row-summary{
-    display:flex; align-items:center; gap:10px;
-    padding:12px 13px;
+  .door-head{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:14px 16px;
+    border-bottom:1px solid var(--line);
+    background:var(--panel-2);
+  }
+  .door-head .input-row{flex:1;}
+  .door-head input.text-input{font-weight:700;font-size:15px;}
+  .remove-btn{
+    width:34px;height:34px;
+    flex-shrink:0;
+    border-radius:9px;
+    background:var(--bg);
+    border:1px solid var(--line);
+    color:var(--danger);
+    font-size:16px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
     cursor:pointer;
   }
-  .row-summary .num{
-    width:24px;height:24px;border-radius:7px;flex-shrink:0;
-    background:var(--bg);border:1px solid var(--line);
-    display:flex;align-items:center;justify-content:center;
-    font-size:11px;font-weight:700;color:var(--accent);
-  }
-  .row-summary .info{flex:1;min-width:0;}
-  .row-summary .info .main{font-size:13.5px;font-weight:600;color:var(--text);}
-  .row-summary .info .sub{font-size:11px;color:var(--muted);margin-top:2px;}
-  .row-summary .cutvals{text-align:right;font-size:11px;flex-shrink:0;}
-  .row-summary .cutvals .back{color:var(--accent-2);font-weight:700;font-size:13px;}
-  .row-summary .cutvals .front{color:var(--accent);font-weight:700;font-size:13px;}
-  .chevron{color:var(--muted);font-size:12px;flex-shrink:0;transition:transform .15s;}
-  .row-card.expanded .chevron{transform:rotate(90deg);}
+  .door-body{padding:16px;}
+  .door-inputs{display:grid;gap:12px;margin-bottom:14px;}
 
-  .row-detail{display:none;padding:0 13px 14px;border-top:1px solid var(--line);}
-  .row-card.expanded .row-detail{display:block;padding-top:14px;}
-
-  .results-row{
-    display:flex;justify-content:space-between;
-    padding:9px 0;border-top:1px solid var(--line);
-    font-size:13px;
+  .add-door-btn{
+    width:100%;
+    padding:14px;
+    border-radius:12px;
+    border:1px dashed var(--line);
+    background:transparent;
+    color:var(--accent);
+    font-size:14px;
+    font-weight:600;
+    cursor:pointer;
+    margin-bottom:14px;
   }
-  .results-row .lbl{color:var(--muted);}
-  .results-row .lbl .sub{display:block;font-size:10px;margin-top:1px;}
-  .results-row .val{font-weight:700;font-variant-numeric:tabular-nums;font-size:14.5px;}
-  .results-row.back .val{color:var(--accent-2);}
-  .results-row.front .val{color:var(--accent);}
+  .add-door-btn:active{background:var(--panel);}
 
   .grand-total{
     background:linear-gradient(135deg, rgba(79,209,197,0.12), rgba(91,140,255,0.12));
     border:1px solid var(--line);
     border-radius:14px;
-    padding:16px;
+    padding:18px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
   }
-  .grand-total .row{display:flex;justify-content:space-between;align-items:center;font-size:12.5px;color:var(--muted);padding:3px 0;}
-  .grand-total .row .num{font-size:15px;font-weight:800;color:var(--text);font-variant-numeric:tabular-nums;}
-
-  footer{text-align:center;font-size:10.5px;color:#4a5160;margin-top:18px;line-height:1.6;}
-
-  .modal-backdrop{
-    position:fixed; inset:0; background:rgba(0,0,0,0.65);
-    display:flex; align-items:center; justify-content:center;
-    padding:20px; z-index:50;
-  }
-  .modal-card{
-    background:var(--panel); border:1px solid var(--line); border-radius:16px;
-    padding:18px; width:100%; max-width:340px; max-height:88vh; overflow-y:auto;
-  }
-  .modal-head{display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;}
-  .modal-head h3{margin:0; font-size:15px; font-weight:700;}
-  .corner-piece-row{
-    display:flex; align-items:center; gap:8px;
-    padding:9px 0; border-top:1px solid var(--line); font-size:13px;
-  }
-  .corner-piece-row:first-of-type{border-top:none;}
-  .corner-piece-row .cp-name{flex:1; color:var(--text); font-weight:600;}
-  .corner-piece-row .cp-joint{color:var(--muted); font-size:12px;}
-
-  .stepper{
-    display:grid; grid-template-columns:1fr 1fr 1fr;
-    gap:8px; margin-bottom:16px;
-  }
-  .stepper button{
-    background:var(--panel); border:1px solid var(--line); border-radius:10px;
-    padding:10px 6px; color:var(--muted); font-size:11.5px; font-weight:600;
-    cursor:pointer; text-align:center;
-  }
-  .stepper button .n{
-    display:inline-flex; align-items:center; justify-content:center;
-    width:18px; height:18px; border-radius:50%; background:var(--bg);
-    border:1px solid var(--line); font-size:10px; margin-right:5px;
-  }
-  .stepper button.active{background:rgba(79,209,197,0.14); border-color:var(--accent); color:var(--accent);}
-  .stepper button.active .n{background:var(--accent); border-color:var(--accent); color:#0b0d10;}
-
-  .review-row{
-    display:flex; align-items:center; gap:10px;
-    padding:12px 13px;
-  }
-  .review-row .num{
-    width:24px;height:24px;border-radius:7px;flex-shrink:0;
-    background:var(--bg);border:1px solid var(--line);
-    display:flex;align-items:center;justify-content:center;
-    font-size:11px;font-weight:700;color:var(--accent);
-  }
-  .review-row .info{flex:1;min-width:0;}
-  .review-row .info .main{font-size:13.5px;font-weight:600;color:var(--text);}
-  .review-row .info .sub{font-size:11px;color:var(--muted);margin-top:2px;}
+  .grand-total .label{font-size:13px;color:var(--muted);}
+  .grand-total .label .sub{display:block;font-size:11px;margin-top:2px;}
+  .grand-total .num{font-size:22px;font-weight:800;color:var(--text);font-variant-numeric: tabular-nums;}
 </style>
 </head>
 <body>
 <div class="wrap">
 
+  <a href="../index.html" style="display:inline-block; font-size:12px; color:var(--muted); text-decoration:none; margin-bottom:14px; border:1px solid var(--line); border-radius:8px; padding:6px 10px;">⌂ Home</a>
+
   <header>
-    <div>
-      <p class="eyebrow">Site tool</p>
-      <h1>Skirting Cutting List</h1>
-      <p class="sub" id="headerSub">Watch the plan build as you add each wall. Tap any entry below to edit it.</p>
-    </div>
-    <button class="gear-btn" id="gearBtn" title="Room settings">⚙</button>
+    <p class="eyebrow">Site tool</p>
+    <h1>Architrave Cut Calculator</h1>
+    <p class="sub">Each door has two architrave sides. Enter your measurements for each side — get short-point and long-point lengths, mitred at 45°.</p>
   </header>
 
-  <div class="stepper">
-    <button type="button" data-stage="measure"><span class="n">1</span>Measure</button>
-    <button type="button" data-stage="review"><span class="n">2</span>Review</button>
-    <button type="button" data-stage="cut"><span class="n">3</span>Cut</button>
+  <div class="switch-row">
+    <div class="switch-label">
+      Cutting list mode
+      <span class="desc">Switch on for multiple doors</span>
+    </div>
+    <label class="toggle">
+      <input type="checkbox" id="modeToggle">
+      <span class="slider"></span>
+    </label>
   </div>
 
-  <div id="measureView">
+  <div class="diagram">
+    <svg width="90" height="86" viewBox="0 0 120 110">
+      <polygon points="10,10 110,10 96,26 24,26" fill="none" stroke="#5b8cff" stroke-width="1.5"/>
+      <polygon points="10,10 24,26 24,100 10,100" fill="none" stroke="#5b8cff" stroke-width="1.5"/>
+      <line x1="24" y1="26" x2="24" y2="100" stroke="#5b8cff" stroke-width="3"/>
+      <line x1="10" y1="10" x2="10" y2="100" stroke="#4fd1c5" stroke-width="3"/>
+      <line x1="10" y1="10" x2="24" y2="26" stroke="#4fd1c5" stroke-width="1.5" stroke-dasharray="2,2"/>
+    </svg>
+    <div class="diagram-legend">
+      <div><span class="dot" style="background:#5b8cff"></span>short point — inner edge</div>
+      <div><span class="dot" style="background:#4fd1c5"></span>long point — outer edge</div>
+      <div class="rule">outer edge = inner edge + width</div>
+    </div>
+  </div>
 
-  <section class="card" id="settingsPanel">
-    <h2>Room settings</h2>
-    <div class="field">
-      <label>Room name</label>
-      <div class="input-row">
-        <input type="text" class="text-input" id="roomName" value="Room 01">
-      </div>
-    </div>
-    <div class="field">
-      <label>Skirting thickness <span class="hint">board depth off the wall</span></label>
-      <div class="input-row">
-        <input type="text" inputmode="decimal" class="text-input" id="skirtThickness" value="19">
-        <span class="unit">mm</span>
-      </div>
-    </div>
-    <div class="field">
-      <label>Internal corners <span class="hint">default for new walls — you can still override any single corner</span></label>
-      <div class="segmented cols-2" id="internalStyleSetting">
-        <button type="button" data-style="Mitre">Mitre</button>
-        <button type="button" data-style="Cope">Cope</button>
-      </div>
-    </div>
-    <div class="btn-row">
-      <button class="btn primary small" id="saveBtn">Save room</button>
-      <button class="btn danger-ghost small" id="clearBtn">Clear</button>
-    </div>
-    <div class="saved-list" id="savedList"></div>
-  </section>
-
-  <section class="card">
-    <div class="plan-wrap">
-      <svg id="planSVG" width="280" height="220" viewBox="0 0 280 220"></svg>
-      <button type="button" class="fit-btn" data-fit="planSVG">⤢ Fit</button>
-    </div>
-    <div class="legend">
-      <span><span class="dot shape-internal"></span>Internal</span>
-      <span><span class="dot shape-coped"></span>Coped</span>
-      <span><span class="dot shape-external"></span>External</span>
-      <span><span class="dot shape-square"></span>Square</span>
-      <span><span class="dash"></span>Opening</span>
-    </div>
-
-    <div class="segmented cols-2" id="entryType">
-      <button type="button" data-type="Wall">Wall</button>
-      <button type="button" data-type="Opening">Opening</button>
-    </div>
-
-    <div class="field" style="margin-top:14px;">
-      <label>Length</label>
-      <div class="input-row">
-        <input type="text" inputmode="decimal" class="text-input" id="entryLength" value="">
-        <span class="unit">mm</span>
-      </div>
-    </div>
-
-    <div id="entryWallExtra">
-      <div class="joint-label">Start corner</div>
-      <div class="segmented cols-4" id="entryStartJoint">
-        <button type="button" data-joint="Internal">Internal</button>
-        <button type="button" data-joint="Coped">Coped</button>
-        <button type="button" data-joint="External">External</button>
-        <button type="button" data-joint="Square">Square</button>
-      </div>
-      <div class="joint-label">End corner</div>
-      <div class="segmented cols-4" id="entryEndJoint">
-        <button type="button" data-joint="Internal">Internal</button>
-        <button type="button" data-joint="Coped">Coped</button>
-        <button type="button" data-joint="External">External</button>
-        <button type="button" data-joint="Square">Square</button>
-      </div>
-    </div>
-    <div id="entryOpeningExtra" style="display:none;">
-      <div class="field" style="margin-bottom:0;">
-        <label>Label <span class="hint">optional — door, window...</span></label>
+  <!-- ===================== SINGLE DOOR MODE ===================== -->
+  <div id="singleMode">
+    <section class="card">
+      <h2>Reveal &amp; architrave</h2>
+      <div class="field">
+        <label>Reveal <span class="hint">margin, each side</span></label>
         <div class="input-row">
-          <input type="text" class="text-input" id="entryLabel" value="" placeholder="Door">
+          <input type="text" inputmode="decimal" class="text-input" id="reveal" value="10">
+          <span class="unit">mm</span>
         </div>
       </div>
-    </div>
+      <div class="field" style="margin-bottom:0;">
+        <label>Architrave width</label>
+        <div class="input-row">
+          <input type="text" inputmode="decimal" class="text-input" id="archWidth" value="68">
+          <span class="unit">mm</span>
+        </div>
+      </div>
+    </section>
 
-    <div class="entry-actions">
-      <button class="btn ghost" id="undoBtn" disabled>↺ Undo</button>
-      <button class="btn primary" id="addBtn">+ Add wall</button>
-    </div>
-  </section>
+    <section class="card" id="singleMeasureCard">
+      <h2>Measurements</h2>
+      <!-- side blocks injected by JS -->
+    </section>
 
-  <section class="card" style="padding-bottom:8px;">
-    <h2>Walls &amp; openings <span class="hint" id="historyHint"></span></h2>
-    <div id="historyList"></div>
-    <p class="empty-note" id="emptyNote" style="display:none;">No walls added yet</p>
-  </section>
-
-  <div class="grand-total">
-    <div class="row"><span>Walls</span><span class="num" id="pieceCount">—</span></div>
-    <div class="row"><span>Openings</span><span class="num" id="openingCount">—</span></div>
-    <div class="row"><span>Total wall length (back)</span><span class="num" id="totalBack">—</span></div>
-    <div class="row"><span>Order this much skirting</span><span class="num" id="totalOrder">—</span></div>
+    <section class="card results" id="singleResultsCard">
+      <h2>Cut lengths</h2>
+      <!-- side result blocks injected by JS -->
+      <div class="total">
+        <span>Door total, both sides (long point)</span>
+        <span class="num" id="singleDoorTotal">—</span>
+      </div>
+    </section>
   </div>
 
-  <button class="btn primary" id="finishBtn" style="width:100%;margin-top:14px;">Continue → Review</button>
+  <!-- ===================== CUTTING LIST MODE ===================== -->
+  <div id="listMode">
+    <section class="card">
+      <h2>Shared settings <span class="hint">applies to every door below</span></h2>
+      <div class="field">
+        <label>Reveal <span class="hint">margin, each side</span></label>
+        <div class="input-row">
+          <input type="text" inputmode="decimal" class="text-input" id="listReveal" value="10">
+          <span class="unit">mm</span>
+        </div>
+      </div>
+      <div class="field" style="margin-bottom:0;">
+        <label>Architrave width</label>
+        <div class="input-row">
+          <input type="text" inputmode="decimal" class="text-input" id="listArchWidth" value="68">
+          <span class="unit">mm</span>
+        </div>
+      </div>
+    </section>
+
+    <div id="doorList"></div>
+
+    <button class="add-door-btn" id="addDoorBtn">+ Add door</button>
+
+    <div class="grand-total">
+      <div class="label">Total for whole list<span class="sub">long point, all pieces, both sides, all doors</span></div>
+      <div class="num" id="grandTotal">—</div>
+    </div>
+  </div>
 
   <footer>
-    Back = wall length as measured, unadjusted &nbsp;·&nbsp; Front = back ± thickness per mitred end<br>
-    Internal: front shorter &nbsp;·&nbsp; External: front longer &nbsp;·&nbsp; Square: no change
+    short point = leg + reveal &nbsp;·&nbsp; long point = short point + architrave width<br>
+    head short point = opening width + (2 × reveal) &nbsp;·&nbsp; Enter jumps to the next field, cursor at the end
   </footer>
 
-  </div><!-- /measureView -->
-
-  <div id="reviewView" style="display:none;">
-
-    <button class="btn ghost" id="backToMeasureFromReviewBtn" style="width:100%;margin-bottom:14px;">← Edit measurements</button>
-
-    <section class="card">
-      <div class="plan-wrap">
-        <svg id="reviewPlanSVG" width="280" height="220" viewBox="0 0 280 220"></svg>
-        <button type="button" class="fit-btn" data-fit="reviewPlanSVG">⤢ Fit</button>
-      </div>
-      <div class="legend">
-        <span><span class="dot shape-internal"></span>Internal</span>
-        <span><span class="dot shape-coped"></span>Coped</span>
-        <span><span class="dot shape-external"></span>External</span>
-        <span><span class="dot shape-square"></span>Square</span>
-        <span><span class="dash"></span>Opening</span>
-      </div>
-    </section>
-
-    <div class="grand-total" style="margin-bottom:14px;">
-      <div class="row"><span>Walls</span><span class="num" id="reviewWallCount">—</span></div>
-      <div class="row"><span>Openings</span><span class="num" id="reviewOpenCount">—</span></div>
-      <div class="row"><span>Total wall length (back)</span><span class="num" id="reviewTotalBack">—</span></div>
-      <div class="row"><span>Order this much skirting</span><span class="num" id="reviewTotalOrder">—</span></div>
-    </div>
-
-    <section class="card" style="padding-bottom:8px;">
-      <h2>All walls <span class="hint">tap a corner on the plan for detail</span></h2>
-      <div id="reviewList"></div>
-    </section>
-
-    <section class="card" id="reviewOpeningsCard" style="display:none;">
-      <h2>Openings</h2>
-      <div id="reviewOpeningsList"></div>
-    </section>
-
-    <button class="btn primary" id="continueToCutBtn" style="width:100%;margin-top:4px;">Continue → Cutting List</button>
-
-  </div><!-- /reviewView -->
-
-  <div id="cutView" style="display:none;">
-
-    <button class="btn ghost" id="backToMeasureBtn" style="width:100%;margin-bottom:14px;">← Back to Review</button>
-
-    <section class="card">
-      <div class="plan-wrap">
-        <svg id="cutPlanSVG" width="280" height="220" viewBox="0 0 280 220"></svg>
-        <button type="button" class="fit-btn" data-fit="cutPlanSVG">⤢ Fit</button>
-      </div>
-      <div class="legend">
-        <span><span class="dot shape-internal"></span>Internal</span>
-        <span><span class="dot shape-coped"></span>Coped</span>
-        <span><span class="dot shape-external"></span>External</span>
-        <span><span class="dot shape-square"></span>Square</span>
-        <span><span class="dash"></span>Opening</span>
-      </div>
-    </section>
-
-    <div class="grand-total" style="margin-bottom:14px;">
-      <div class="row"><span id="cutRoomNameLabel">Room</span><span class="num" id="cutPieceCount">—</span></div>
-      <div class="row"><span>Total skirting required</span><span class="num" id="cutTotalOrder">—</span></div>
-    </div>
-
-    <section class="card" style="padding-bottom:8px;">
-      <h2>Cutting list <span class="hint">tick off as you cut</span></h2>
-      <div id="cutList"></div>
-    </section>
-
-    <section class="card" id="cutOpeningsCard" style="display:none;">
-      <h2>Openings <span class="hint">no skirting needed</span></h2>
-      <div id="cutOpeningsList"></div>
-    </section>
-
-    <footer>
-      Back = wall side, unadjusted &nbsp;·&nbsp; Front = room-facing edge, ± thickness per mitred end &nbsp;·&nbsp; "Order this much" uses the longer of the two per piece
-    </footer>
-
-  </div><!-- /cutView -->
-
-</div>
-
-<div id="cornerModal" class="modal-backdrop" style="display:none;">
-  <div class="modal-card">
-    <div class="modal-head">
-      <h3>Corner detail</h3>
-      <button class="mini-btn" id="cornerModalClose">✕ Close</button>
-    </div>
-    <div id="cornerModalBody"></div>
-  </div>
 </div>
 
 <script>
-  const STORAGE_KEY = 'skirting-cutting-list-rooms-v3';
-
+  /* ===================== SHARED HELPERS ===================== */
   function fmt(n){
     if (isNaN(n)) return '—';
     return Math.round(n * 10) / 10 + ' mm';
   }
-  function jointAdj(joint){
-    if (joint === 'Internal' || joint === 'Coped') return -1;
-    if (joint === 'External') return 1;
-    return 0;
-  }
-  function pieceCut(piece, h){
-    if (piece.type === 'Opening') return {back: piece.length, front: piece.length};
-    const back = piece.length;
-    const front = piece.length + jointAdj(piece.startJoint) * h + jointAdj(piece.endJoint) * h;
-    return {back, front};
+
+  function calcPieces(legLeft, legRight, openWidth, reveal, archWidth){
+    const leftSP = legLeft + reveal;
+    const leftLP = leftSP + archWidth;
+    const rightSP = legRight + reveal;
+    const rightLP = rightSP + archWidth;
+    const headSP = openWidth + (2 * reveal);
+    const headLP = headSP + (2 * archWidth);
+    const total = leftLP + rightLP + headLP;
+    return {leftSP, leftLP, rightSP, rightLP, headSP, headLP, total};
   }
 
-  /* ===================== STATE ===================== */
-  let pieces = [];      // {id, type, length, startJoint, endJoint, label}
-  let nextId = 1;
-  let expandedId = null;
-  let roomInternalStyle = 'Mitre'; // 'Mitre' | 'Cope' — default for new walls only
-  const historyStack = [];
-  const MAX_HISTORY = 15;
+  function sideInputsHTML(prefix, defaults){
+    return `
+      <div class="field">
+        <label>Left leg <span class="hint">floor to head</span></label>
+        <div class="input-row">
+          <input type="text" inputmode="decimal" class="text-input" data-role="${prefix}legLeft" value="${defaults.legLeft}">
+          <span class="unit">mm</span>
+        </div>
+      </div>
+      <div class="field">
+        <label>Right leg <span class="hint">floor to head</span></label>
+        <div class="input-row">
+          <input type="text" inputmode="decimal" class="text-input" data-role="${prefix}legRight" value="${defaults.legRight}">
+          <span class="unit">mm</span>
+        </div>
+      </div>
+      <div class="field" style="margin-bottom:0;">
+        <label>Opening width</label>
+        <div class="input-row">
+          <input type="text" inputmode="decimal" class="text-input" data-role="${prefix}openWidth" value="${defaults.openWidth}">
+          <span class="unit">mm</span>
+        </div>
+      </div>
+    `;
+  }
 
-  /* Smart defaults for a new wall's corners, based on whatever the room's
-     last wall (or the piece it's being inserted after) already declares.
-     These only set the starting point in the form — nothing is forced,
-     and existing walls are never rewritten. */
-  function defaultStartAfter(refPiece){
-    if (!refPiece || refPiece.type === 'Opening') return 'Square';
-    const end = refPiece.endJoint;
-    if (end === 'External') return 'External';
-    if (end === 'Coped') return 'Square';   // the coped board always meets a square-butted one
-    if (end === 'Internal') return 'Internal';
-    return 'Square';
-  }
-  function defaultEndJoint(){
-    return roomInternalStyle === 'Cope' ? 'Coped' : 'Internal';
+  function sideResultsHTML(prefix){
+    return `
+      <div class="piece">
+        <div class="piece-name">Left leg</div>
+        <div class="piece-vals">
+          <div class="val-row sp"><span class="tag">short</span><span class="num" data-out="${prefix}leftSP">—</span></div>
+          <div class="val-row lp"><span class="tag">long</span><span class="num" data-out="${prefix}leftLP">—</span></div>
+        </div>
+      </div>
+      <div class="piece">
+        <div class="piece-name">Right leg</div>
+        <div class="piece-vals">
+          <div class="val-row sp"><span class="tag">short</span><span class="num" data-out="${prefix}rightSP">—</span></div>
+          <div class="val-row lp"><span class="tag">long</span><span class="num" data-out="${prefix}rightLP">—</span></div>
+        </div>
+      </div>
+      <div class="piece">
+        <div class="piece-name">Head</div>
+        <div class="piece-vals">
+          <div class="val-row sp"><span class="tag">short</span><span class="num" data-out="${prefix}headSP">—</span></div>
+          <div class="val-row lp"><span class="tag">long</span><span class="num" data-out="${prefix}headLP">—</span></div>
+        </div>
+      </div>
+      <div class="side-subtotal">
+        <span>Side subtotal (long point)</span>
+        <span class="num" data-out="${prefix}subtotal">—</span>
+      </div>
+    `;
   }
 
-  function pushHistory(){
-    historyStack.push(JSON.stringify(pieces));
-    if (historyStack.length > MAX_HISTORY) historyStack.shift();
-    updateUndoButton();
+  /* name auto-increment: preserves prefix + zero-padding of the last number in the string */
+  function incrementName(name){
+    const match = name.match(/(\d+)(\D*)$/);
+    if (!match) return name;
+    const digits = match[1];
+    const before = name.slice(0, match.index);
+    const after = match[2];
+    const num = parseInt(digits, 10) + 1;
+    const newDigits = String(num).padStart(digits.length, '0');
+    return before + newDigits + after;
   }
-  function updateUndoButton(){
-    document.getElementById('undoBtn').disabled = historyStack.length === 0;
-  }
-  function undo(){
-    if (historyStack.length === 0) return;
-    pieces = JSON.parse(historyStack.pop());
-    expandedId = null;
-    updateUndoButton();
-    renderAll();
-  }
-  document.getElementById('undoBtn').addEventListener('click', undo);
 
   /* ===================== ENTER-KEY NAVIGATION ===================== */
   document.addEventListener('keydown', function(e){
@@ -573,968 +464,202 @@
     const el = e.target;
     if (el.tagName !== 'INPUT') return;
     e.preventDefault();
+
     const all = Array.from(document.querySelectorAll('input')).filter(inp => inp.offsetParent !== null);
     const idx = all.indexOf(el);
     if (idx === -1) return;
     const next = all[idx + 1];
-    if (!next){ el.blur(); return; }
+    if (!next) { el.blur(); return; }
     next.focus();
     requestAnimationFrame(() => {
       const len = next.value.length;
       if (typeof next.setSelectionRange === 'function'){
-        try{ next.setSelectionRange(len, len); }catch(err){}
+        try { next.setSelectionRange(len, len); } catch(err){}
       }
     });
   });
 
-  /* ===================== SETTINGS PANEL ===================== */
-  const gearBtn = document.getElementById('gearBtn');
-  const settingsPanel = document.getElementById('settingsPanel');
-  gearBtn.addEventListener('click', () => {
-    const open = settingsPanel.style.display === 'block';
-    settingsPanel.style.display = open ? 'none' : 'block';
-    gearBtn.classList.toggle('active', !open);
-  });
-  document.getElementById('skirtThickness').addEventListener('input', renderAll);
+  /* ===================== SINGLE DOOR MODE ===================== */
+  const singleMeasureCard = document.getElementById('singleMeasureCard');
+  const singleResultsCard = document.getElementById('singleResultsCard');
 
-  /* ===================== ENTRY FORM ===================== */
-  let entryType = 'Wall';
-  const entryTypeSeg = document.getElementById('entryType');
-  entryTypeSeg.querySelectorAll('button').forEach(btn => {
-    if (btn.dataset.type === entryType) btn.classList.add('active');
-    btn.addEventListener('click', () => {
-      entryType = btn.dataset.type;
-      entryTypeSeg.querySelectorAll('button').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      document.getElementById('entryWallExtra').style.display = entryType === 'Wall' ? 'block' : 'none';
-      document.getElementById('entryOpeningExtra').style.display = entryType === 'Opening' ? 'block' : 'none';
-      updatePlanPreview();
-    });
-  });
+  singleMeasureCard.insertAdjacentHTML('beforeend', `
+    <div class="side-block">
+      <p class="side-title">Side 1</p>
+      ${sideInputsHTML('s1', {legLeft:2040, legRight:2040, openWidth:900})}
+    </div>
+    <div class="side-block">
+      <p class="side-title">Side 2</p>
+      ${sideInputsHTML('s2', {legLeft:2040, legRight:2040, openWidth:900})}
+    </div>
+  `);
 
-  function wireJointSeg(containerId, defaultJoint){
-    const el = document.getElementById(containerId);
-    el.querySelectorAll('button').forEach(btn => {
-      if (btn.dataset.joint === defaultJoint) btn.classList.add('active');
-      btn.addEventListener('click', () => {
-        el.querySelectorAll('button').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        updatePlanPreview();
-      });
-    });
-  }
-  wireJointSeg('entryStartJoint', defaultStartAfter(pieces[pieces.length - 1]));
-  wireJointSeg('entryEndJoint', defaultEndJoint());
+  singleResultsCard.querySelector('.total').insertAdjacentHTML('beforebegin', `
+    <div class="side-block">
+      <p class="side-title">Side 1</p>
+      ${sideResultsHTML('s1')}
+    </div>
+    <div class="side-block">
+      <p class="side-title">Side 2</p>
+      ${sideResultsHTML('s2')}
+    </div>
+  `);
 
-  document.querySelectorAll('#internalStyleSetting button').forEach(btn => {
-    if (btn.dataset.style === roomInternalStyle) btn.classList.add('active');
-    btn.addEventListener('click', () => {
-      roomInternalStyle = btn.dataset.style;
-      document.querySelectorAll('#internalStyleSetting button').forEach(b => b.classList.toggle('active', b === btn));
-    });
-  });
+  const singleReveal = document.getElementById('reveal');
+  const singleArchWidth = document.getElementById('archWidth');
 
-  document.getElementById('entryLength').addEventListener('input', updatePlanPreview);
-  document.getElementById('entryLabel').addEventListener('input', updatePlanPreview);
+  function calcSingle(){
+    const reveal = parseFloat(singleReveal.value);
+    const archWidth = parseFloat(singleArchWidth.value);
+    let grand = 0, anyValid = false;
 
-  function readEntryForm(){
-    const length = parseFloat(document.getElementById('entryLength').value);
-    if (entryType === 'Opening'){
-      return {type:'Opening', length, label: document.getElementById('entryLabel').value};
-    }
-    const startBtn = document.querySelector('#entryStartJoint .active');
-    const endBtn = document.querySelector('#entryEndJoint .active');
-    return {
-      type:'Wall', length,
-      startJoint: startBtn ? startBtn.dataset.joint : 'Internal',
-      endJoint: endBtn ? endBtn.dataset.joint : 'Internal'
-    };
-  }
+    ['s1','s2'].forEach(prefix => {
+      const legLeft = parseFloat(document.querySelector(`[data-role="${prefix}legLeft"]`).value);
+      const legRight = parseFloat(document.querySelector(`[data-role="${prefix}legRight"]`).value);
+      const openWidth = parseFloat(document.querySelector(`[data-role="${prefix}openWidth"]`).value);
+      const r = calcPieces(legLeft, legRight, openWidth, reveal, archWidth);
 
-  function setEntryForm(data){
-    entryType = data.type;
-    entryTypeSeg.querySelectorAll('button').forEach(b => b.classList.toggle('active', b.dataset.type === data.type));
-    document.getElementById('entryWallExtra').style.display = data.type === 'Wall' ? 'block' : 'none';
-    document.getElementById('entryOpeningExtra').style.display = data.type === 'Opening' ? 'block' : 'none';
-    document.getElementById('entryLength').value = data.length;
-    document.getElementById('addBtn').textContent = data.type === 'Opening' ? '+ Add opening' : '+ Add wall';
-    if (data.type === 'Wall'){
-      document.querySelectorAll('#entryStartJoint button').forEach(b => b.classList.toggle('active', b.dataset.joint === data.startJoint));
-      document.querySelectorAll('#entryEndJoint button').forEach(b => b.classList.toggle('active', b.dataset.joint === data.endJoint));
-    } else {
-      document.getElementById('entryLabel').value = data.label || '';
-    }
-  }
+      document.querySelector(`[data-out="${prefix}leftSP"]`).textContent = fmt(r.leftSP);
+      document.querySelector(`[data-out="${prefix}leftLP"]`).textContent = fmt(r.leftLP);
+      document.querySelector(`[data-out="${prefix}rightSP"]`).textContent = fmt(r.rightSP);
+      document.querySelector(`[data-out="${prefix}rightLP"]`).textContent = fmt(r.rightLP);
+      document.querySelector(`[data-out="${prefix}headSP"]`).textContent = fmt(r.headSP);
+      document.querySelector(`[data-out="${prefix}headLP"]`).textContent = fmt(r.headLP);
+      document.querySelector(`[data-out="${prefix}subtotal"]`).textContent = isNaN(r.total) ? '—' : fmt(r.total);
 
-  function resetEntryForm(){
-    const lastPiece = pieces[pieces.length - 1];
-    setEntryForm({
-      type: 'Wall', length: '',
-      startJoint: defaultStartAfter(lastPiece),
-      endJoint: defaultEndJoint(),
-      label: ''
-    });
-  }
-
-  document.getElementById('addBtn').addEventListener('click', () => {
-    const data = readEntryForm();
-    if (isNaN(data.length)) return;
-    pushHistory();
-    const piece = Object.assign({id: nextId++}, data);
-    pieces.push(piece);
-    // clear to a blank state — only committed walls should show on the plan,
-    // so the next wall must be entered fresh rather than inheriting a value
-    resetEntryForm();
-    renderAll();
-  });
-
-  /* ===================== HISTORY LIST ===================== */
-  const historyListEl = document.getElementById('historyList');
-
-  function jointDot(j){
-    if (j === 'Internal'){
-      return `<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#4fd1c5;margin-right:3px;"></span>`;
-    }
-    if (j === 'External'){
-      return `<span style="display:inline-block;width:7px;height:7px;border-radius:1px;background:#5b8cff;margin-right:3px;"></span>`;
-    }
-    if (j === 'Coped'){
-      return `<span style="display:inline-block;width:0;height:0;border-left:4px solid transparent;border-right:4px solid transparent;border-bottom:7px solid #a78bfa;margin-right:4px;vertical-align:middle;"></span>`;
-    }
-    return `<span style="display:inline-block;width:6px;height:6px;background:#f5b342;transform:rotate(45deg);margin-right:4px;"></span>`;
-  }
-
-  function renderHistory(){
-    const h = parseFloat(document.getElementById('skirtThickness').value);
-    historyListEl.innerHTML = '';
-    document.getElementById('emptyNote').style.display = pieces.length === 0 ? 'block' : 'none';
-
-    let wallN = 0, openN = 0;
-    pieces.forEach(piece => {
-      const card = document.createElement('div');
-      card.className = 'row-card' + (piece.id === expandedId ? ' expanded' : '');
-
-      let numLabel, summaryMain, summarySub, cutHtml;
-      if (piece.type === 'Wall'){
-        wallN++;
-        numLabel = wallN;
-        const {back, front} = pieceCut(piece, h);
-        summaryMain = fmt(piece.length);
-        summarySub = `${jointDot(piece.startJoint)}${piece.startJoint} → ${jointDot(piece.endJoint)}${piece.endJoint}`;
-        cutHtml = `<div class="back">${fmt(back)}</div><div class="front">${fmt(front)}</div>`;
-      } else {
-        openN++;
-        numLabel = 'O' + openN;
-        summaryMain = (piece.label ? piece.label + ' · ' : '') + Math.round(piece.length) + ' mm';
-        summarySub = 'Opening — no skirting';
-        cutHtml = `<div class="front">—</div>`;
-      }
-
-      card.innerHTML = `
-        <div class="row-summary" data-role="toggle">
-          <div class="num">${numLabel}</div>
-          <div class="info">
-            <div class="main">${summaryMain}</div>
-            <div class="sub">${summarySub}</div>
-          </div>
-          <div class="cutvals">${cutHtml}</div>
-          <div class="chevron">▸</div>
-        </div>
-        <div class="row-detail" data-role="detail"></div>
-      `;
-
-      card.querySelector('[data-role="toggle"]').addEventListener('click', () => {
-        expandedId = (expandedId === piece.id) ? null : piece.id;
-        renderHistory();
-      });
-
-      if (piece.id === expandedId){
-        buildDetailForm(card.querySelector('[data-role="detail"]'), piece);
-      }
-
-      historyListEl.appendChild(card);
+      if (!isNaN(r.total)){ grand += r.total; anyValid = true; }
     });
 
-    document.getElementById('historyHint').textContent = pieces.length ? `${pieces.length} entries` : '';
+    document.getElementById('singleDoorTotal').textContent = anyValid ? fmt(grand) : '—';
   }
 
-  function buildDetailForm(container, piece){
-    container.innerHTML = `
-      <div class="segmented cols-2" data-role="type">
-        <button type="button" data-type="Wall">Wall</button>
-        <button type="button" data-type="Opening">Opening</button>
-      </div>
-      <div class="field" style="margin-top:14px;">
-        <label>Length</label>
+  document.querySelectorAll('#singleMode input').forEach(inp => inp.addEventListener('input', calcSingle));
+  calcSingle();
+
+  /* ===================== CUTTING LIST MODE ===================== */
+  const doorListEl = document.getElementById('doorList');
+  const listReveal = document.getElementById('listReveal');
+  const listArchWidth = document.getElementById('listArchWidth');
+  let doorCount = 0;
+
+  function makeDoorCard(name, side1Defaults, side2Defaults){
+    doorCount++;
+    const card = document.createElement('div');
+    card.className = 'door-card';
+    card.innerHTML = `
+      <div class="door-head">
         <div class="input-row">
-          <input type="text" inputmode="decimal" class="text-input" data-role="length" value="${piece.length}">
-          <span class="unit">mm</span>
+          <input type="text" class="text-input" value="${name}" data-role="name">
         </div>
+        <div class="remove-btn" data-role="remove">✕</div>
       </div>
-      <div data-role="wallExtra">
-        <div class="joint-label">Start corner</div>
-        <div class="segmented cols-4" data-role="startJoint">
-          <button type="button" data-joint="Internal">Internal</button>
-          <button type="button" data-joint="Coped">Coped</button>
-          <button type="button" data-joint="External">External</button>
-          <button type="button" data-joint="Square">Square</button>
+      <div class="door-body">
+        <div class="side-block">
+          <p class="side-title">Side 1</p>
+          <div class="door-inputs">${sideInputsHTML('s1', side1Defaults)}</div>
+          ${sideResultsHTML('s1')}
         </div>
-        <div class="joint-label">End corner</div>
-        <div class="segmented cols-4" data-role="endJoint">
-          <button type="button" data-joint="Internal">Internal</button>
-          <button type="button" data-joint="Coped">Coped</button>
-          <button type="button" data-joint="External">External</button>
-          <button type="button" data-joint="Square">Square</button>
+        <div class="side-block">
+          <p class="side-title">Side 2</p>
+          <div class="door-inputs">${sideInputsHTML('s2', side2Defaults)}</div>
+          ${sideResultsHTML('s2')}
         </div>
-        <div class="results-row back"><span class="lbl">Back<span class="sub">against the wall</span></span><span class="val" data-out="back">—</span></div>
-        <div class="results-row front"><span class="lbl">Front<span class="sub">room-facing edge</span></span><span class="val" data-out="front">—</span></div>
-      </div>
-      <div data-role="openingExtra" style="display:none;">
-        <div class="field" style="margin-bottom:0;">
-          <label>Label</label>
-          <div class="input-row">
-            <input type="text" class="text-input" data-role="label" value="${piece.label || ''}" placeholder="Door">
-          </div>
+        <div class="total">
+          <span>Door total, both sides (long point)</span>
+          <span class="num" data-out="doorTotal">—</span>
         </div>
-      </div>
-      <div class="btn-row" style="margin-top:16px;">
-        <button class="btn small" data-role="insert">+ Insert after</button>
-        <button class="btn danger-ghost small" data-role="remove">Remove</button>
       </div>
     `;
-
-    const typeBtns = container.querySelectorAll('[data-role="type"] button');
-    typeBtns.forEach(btn => {
-      if (btn.dataset.type === piece.type) btn.classList.add('active');
-      btn.addEventListener('click', () => {
-        pushHistory();
-        piece.type = btn.dataset.type;
-        if (piece.type === 'Wall'){
-          piece.startJoint = piece.startJoint || 'Internal';
-          piece.endJoint = piece.endJoint || 'Internal';
-        }
-        renderHistory();
-        updateTotals();
-        updatePlanPreview();
-      });
+    doorListEl.appendChild(card);
+    card.querySelectorAll('input').forEach(inp => inp.addEventListener('input', calcList));
+    card.querySelector('[data-role="remove"]').addEventListener('click', () => {
+      card.remove();
+      calcList();
     });
-    container.querySelector('[data-role="wallExtra"]').style.display = piece.type === 'Wall' ? 'block' : 'none';
-    container.querySelector('[data-role="openingExtra"]').style.display = piece.type === 'Opening' ? 'block' : 'none';
-
-    container.querySelector('[data-role="length"]').addEventListener('input', (e) => {
-      piece.length = parseFloat(e.target.value);
-      refreshRowLive(container, piece);
-    });
-    const labelInput = container.querySelector('[data-role="label"]');
-    if (labelInput) labelInput.addEventListener('input', (e) => {
-      piece.label = e.target.value;
-      refreshRowLive(container, piece);
-    });
-
-    ['startJoint','endJoint'].forEach(role => {
-      const btns = container.querySelectorAll(`[data-role="${role}"] button`);
-      btns.forEach(btn => {
-        if (btn.dataset.joint === piece[role]) btn.classList.add('active');
-        btn.addEventListener('click', () => {
-          btns.forEach(b => b.classList.remove('active'));
-          btn.classList.add('active');
-          piece[role] = btn.dataset.joint;
-          refreshRowLive(container, piece);
-        });
-      });
-    });
-
-    container.querySelector('[data-role="remove"]').addEventListener('click', () => {
-      pushHistory();
-      pieces = pieces.filter(p => p.id !== piece.id);
-      if (expandedId === piece.id) expandedId = null;
-      renderAll();
-    });
-
-    container.querySelector('[data-role="insert"]').addEventListener('click', () => {
-      pushHistory();
-      const idx = pieces.findIndex(p => p.id === piece.id);
-      const newPiece = {id: nextId++, type:'Wall', length:3000, startJoint: defaultStartAfter(piece), endJoint: defaultEndJoint()};
-      pieces.splice(idx + 1, 0, newPiece);
-      expandedId = newPiece.id;
-      renderAll();
-    });
-
-    updateDetailResults(container, piece);
+    return card;
   }
 
-  function updateDetailResults(container, piece){
-    const h = parseFloat(document.getElementById('skirtThickness').value);
-    if (piece.type === 'Wall'){
-      const {back, front} = pieceCut(piece, h);
-      const backEl = container.querySelector('[data-out="back"]');
-      const frontEl = container.querySelector('[data-out="front"]');
-      if (backEl) backEl.textContent = fmt(back);
-      if (frontEl) frontEl.textContent = fmt(front);
-    }
-  }
-
-  /* live-refresh without a full re-render, so the input keeps focus */
-  function refreshRowLive(detailContainer, piece){
-    updateDetailResults(detailContainer, piece);
-    const card = detailContainer.closest('.row-card');
-    const summaryEl = card.querySelector('.row-summary');
-    const h = parseFloat(document.getElementById('skirtThickness').value);
-    if (piece.type === 'Wall'){
-      const {back, front} = pieceCut(piece, h);
-      summaryEl.querySelector('.main').textContent = fmt(piece.length);
-      summaryEl.querySelector('.sub').innerHTML = `${jointDot(piece.startJoint)}${piece.startJoint} → ${jointDot(piece.endJoint)}${piece.endJoint}`;
-      summaryEl.querySelector('.cutvals').innerHTML = `<div class="back">${fmt(back)}</div><div class="front">${fmt(front)}</div>`;
+  document.getElementById('addDoorBtn').addEventListener('click', () => {
+    const cards = doorListEl.querySelectorAll('.door-card');
+    let name, s1, s2;
+    if (cards.length > 0){
+      const last = cards[cards.length - 1];
+      name = incrementName(last.querySelector('[data-role="name"]').value);
+      s1 = {
+        legLeft: last.querySelector('[data-role="s1legLeft"]').value,
+        legRight: last.querySelector('[data-role="s1legRight"]').value,
+        openWidth: last.querySelector('[data-role="s1openWidth"]').value
+      };
+      s2 = {
+        legLeft: last.querySelector('[data-role="s2legLeft"]').value,
+        legRight: last.querySelector('[data-role="s2legRight"]').value,
+        openWidth: last.querySelector('[data-role="s2openWidth"]').value
+      };
     } else {
-      summaryEl.querySelector('.main').textContent = (piece.label ? piece.label + ' · ' : '') + Math.round(piece.length || 0) + ' mm';
-      summaryEl.querySelector('.cutvals').innerHTML = `<div class="front">—</div>`;
+      name = 'Door ' + String(doorCount + 1).padStart(2, '0');
+      s1 = {legLeft:2040, legRight:2040, openWidth:900};
+      s2 = {legLeft:2040, legRight:2040, openWidth:900};
     }
-    updateTotals();
-    updatePlanPreview();
-  }
-
-  /* ===================== TOTALS ===================== */
-  function updateTotals(){
-    const h = parseFloat(document.getElementById('skirtThickness').value);
-    let totalBack = 0, totalOrder = 0, anyValid = false, wallCount = 0, openCount = 0;
-    pieces.forEach(piece => {
-      if (piece.type === 'Opening'){ openCount++; return; }
-      wallCount++;
-      const {back, front} = pieceCut(piece, h);
-      if (!isNaN(back)){
-        totalBack += back;
-        totalOrder += Math.max(back, isNaN(front) ? back : front);
-        anyValid = true;
-      }
-    });
-    document.getElementById('pieceCount').textContent = wallCount;
-    document.getElementById('openingCount').textContent = openCount;
-    document.getElementById('totalBack').textContent = anyValid ? fmt(totalBack) : '—';
-    document.getElementById('totalOrder').textContent = anyValid ? fmt(totalOrder) : '—';
-  }
-
-  /* ===================== FLOOR PLAN ===================== */
-  function rotateCW(d){ return {dx: -d.dy, dy: d.dx}; }
-  function rotateCCW(d){ return {dx: d.dy, dy: -d.dx}; }
-
-  /* ===================== SHARED CORNER VISUALS ===================== */
-  const colorFor = j => j === 'Internal' ? '#4fd1c5' : (j === 'External' ? '#5b8cff' : (j === 'Coped' ? '#a78bfa' : '#f5b342'));
-
-  function markerShape(joint, cx, cy, r){
-    r = r || 3.5;
-    const color = colorFor(joint);
-    if (joint === 'Internal'){
-      return `<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="${r}" fill="${color}" />`;
-    }
-    if (joint === 'External'){
-      const s = r * 1.7;
-      return `<rect x="${(cx-s/2).toFixed(1)}" y="${(cy-s/2).toFixed(1)}" width="${s}" height="${s}" fill="${color}" />`;
-    }
-    if (joint === 'Coped'){
-      const s = r * 2.1;
-      return `<polygon points="${cx.toFixed(1)},${(cy-s/2).toFixed(1)} ${(cx-s*0.55).toFixed(1)},${(cy+s/2).toFixed(1)} ${(cx+s*0.55).toFixed(1)},${(cy+s/2).toFixed(1)}" fill="${color}" />`;
-    }
-    const s = r * 1.85;
-    return `<rect x="${(cx-s/2).toFixed(1)}" y="${(cy-s/2).toFixed(1)}" width="${s}" height="${s}" fill="${color}" transform="rotate(45 ${cx.toFixed(1)} ${cy.toFixed(1)})" />`;
-  }
-
-  /* ===================== ZOOM / PAN ===================== */
-  const zoomState = {}; // svgId -> {scale, tx, ty}
-  let justPanned = false;
-
-  function getZoomState(svgId){
-    if (!zoomState[svgId]) zoomState[svgId] = {scale: 1, tx: 0, ty: 0};
-    return zoomState[svgId];
-  }
-
-  function applyZoomTransform(svgId){
-    const svg = document.getElementById(svgId);
-    if (!svg) return;
-    const g = svg.querySelector('.viewport-g');
-    if (!g) return;
-    const st = getZoomState(svgId);
-    g.setAttribute('transform', `translate(${st.tx.toFixed(2)},${st.ty.toFixed(2)}) scale(${st.scale.toFixed(3)})`);
-  }
-
-  function resetZoom(svgId){
-    zoomState[svgId] = {scale: 1, tx: 0, ty: 0};
-    applyZoomTransform(svgId);
-  }
-
-  function screenToSvgPoint(svg, clientX, clientY){
-    const pt = svg.createSVGPoint();
-    pt.x = clientX; pt.y = clientY;
-    const ctm = svg.getScreenCTM();
-    if (!ctm) return {x: 0, y: 0};
-    const p = pt.matrixTransform(ctm.inverse());
-    return {x: p.x, y: p.y};
-  }
-
-  function zoomAt(svgId, svg, clientX, clientY, factor){
-    const st = getZoomState(svgId);
-    const pRoot = screenToSvgPoint(svg, clientX, clientY);
-    const localX = (pRoot.x - st.tx) / st.scale;
-    const localY = (pRoot.y - st.ty) / st.scale;
-    const newScale = Math.max(0.5, Math.min(st.scale * factor, 8));
-    st.tx = pRoot.x - newScale * localX;
-    st.ty = pRoot.y - newScale * localY;
-    st.scale = newScale;
-    applyZoomTransform(svgId);
-  }
-
-  function touchDist(touches){
-    const dx = touches[0].clientX - touches[1].clientX;
-    const dy = touches[0].clientY - touches[1].clientY;
-    return Math.hypot(dx, dy);
-  }
-
-  function setupZoomPan(svgId){
-    const svg = document.getElementById(svgId);
-    if (!svg) return;
-
-    svg.addEventListener('wheel', (e) => {
-      e.preventDefault();
-      const factor = e.deltaY < 0 ? 1.15 : 1 / 1.15;
-      zoomAt(svgId, svg, e.clientX, e.clientY, factor);
-    }, {passive: false});
-
-    let dragState = null;
-    svg.addEventListener('pointerdown', (e) => {
-      if (e.button !== undefined && e.button !== 0) return;
-      const st = getZoomState(svgId);
-      dragState = {startX: e.clientX, startY: e.clientY, moved: false, startTx: st.tx, startTy: st.ty};
-    });
-    window.addEventListener('pointermove', (e) => {
-      if (!dragState) return;
-      const dx = e.clientX - dragState.startX, dy = e.clientY - dragState.startY;
-      if (!dragState.moved && Math.hypot(dx, dy) < 4) return;
-      dragState.moved = true;
-      justPanned = true;
-      svg.classList.add('grabbing');
-      const p0 = screenToSvgPoint(svg, dragState.startX, dragState.startY);
-      const p1 = screenToSvgPoint(svg, e.clientX, e.clientY);
-      const st = getZoomState(svgId);
-      st.tx = dragState.startTx + (p1.x - p0.x);
-      st.ty = dragState.startTy + (p1.y - p0.y);
-      applyZoomTransform(svgId);
-    });
-    window.addEventListener('pointerup', () => {
-      if (dragState && dragState.moved){
-        setTimeout(() => { justPanned = false; }, 60);
-      }
-      dragState = null;
-      svg.classList.remove('grabbing');
-    });
-
-    let pinch = null;
-    svg.addEventListener('touchstart', (e) => {
-      if (e.touches.length === 2){
-        pinch = {dist: touchDist(e.touches)};
-        dragState = null;
-      }
-    }, {passive: true});
-    svg.addEventListener('touchmove', (e) => {
-      if (e.touches.length === 2 && pinch){
-        e.preventDefault();
-        const newDist = touchDist(e.touches);
-        const factor = newDist / pinch.dist;
-        const midX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
-        const midY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
-        zoomAt(svgId, svg, midX, midY, factor);
-        pinch.dist = newDist;
-        justPanned = true;
-      }
-    }, {passive: false});
-    svg.addEventListener('touchend', (e) => {
-      if (e.touches.length < 2){
-        pinch = null;
-        setTimeout(() => { justPanned = false; }, 60);
-      }
-    });
-  }
-
-  document.querySelectorAll('.fit-btn').forEach(btn => {
-    btn.addEventListener('click', () => resetZoom(btn.dataset.fit));
+    makeDoorCard(name, s1, s2);
+    calcList();
   });
-  setupZoomPan('planSVG');
-  setupZoomPan('reviewPlanSVG');
-  setupZoomPan('cutPlanSVG');
 
-  function drawFloorPlan(list, h, draftPiece, svgId){
-    svgId = svgId || 'planSVG';
-    const svg = document.getElementById(svgId);
-    const all = draftPiece ? list.concat([draftPiece]) : list;
-    if (all.length === 0 || all.some(p => isNaN(p.length))){
-      svg.innerHTML = '<g class="viewport-g"><text x="140" y="110" text-anchor="middle" fill="#4a5160" font-size="12">Add a wall to see the plan</text></g>';
-      applyZoomTransform(svgId);
-      return;
-    }
+  function calcList(){
+    const reveal = parseFloat(listReveal.value);
+    const archWidth = parseFloat(listArchWidth.value);
+    let grand = 0, anyValid = false;
 
-    let x = 0, y = 0;
-    let dir = {dx:1, dy:0};
-    const points = [{x, y}];
+    doorListEl.querySelectorAll('.door-card').forEach(card => {
+      let doorTotal = 0, doorValid = false;
 
-    all.forEach((piece, i) => {
-      x += dir.dx * piece.length;
-      y += dir.dy * piece.length;
-      points.push({x, y});
+      ['s1','s2'].forEach(prefix => {
+        const legLeft = parseFloat(card.querySelector(`[data-role="${prefix}legLeft"]`).value);
+        const legRight = parseFloat(card.querySelector(`[data-role="${prefix}legRight"]`).value);
+        const openWidth = parseFloat(card.querySelector(`[data-role="${prefix}openWidth"]`).value);
+        const r = calcPieces(legLeft, legRight, openWidth, reveal, archWidth);
 
-      const exitJoint = piece.type === 'Wall' ? piece.endJoint : 'Square';
-      const nextPiece = all[i + 1];
-      const entryJoint = (nextPiece && nextPiece.type === 'Wall') ? nextPiece.startJoint : 'Square';
-      const turnJoint = exitJoint !== 'Square' ? exitJoint : entryJoint;
+        card.querySelector(`[data-out="${prefix}leftSP"]`).textContent = fmt(r.leftSP);
+        card.querySelector(`[data-out="${prefix}leftLP"]`).textContent = fmt(r.leftLP);
+        card.querySelector(`[data-out="${prefix}rightSP"]`).textContent = fmt(r.rightSP);
+        card.querySelector(`[data-out="${prefix}rightLP"]`).textContent = fmt(r.rightLP);
+        card.querySelector(`[data-out="${prefix}headSP"]`).textContent = fmt(r.headSP);
+        card.querySelector(`[data-out="${prefix}headLP"]`).textContent = fmt(r.headLP);
+        card.querySelector(`[data-out="${prefix}subtotal"]`).textContent = isNaN(r.total) ? '—' : fmt(r.total);
 
-      if (turnJoint === 'Internal' || turnJoint === 'Coped') dir = rotateCW(dir);
-      else if (turnJoint === 'External') dir = rotateCCW(dir);
-    });
-
-    const xs = points.map(p => p.x), ys = points.map(p => p.y);
-    const minX = Math.min(...xs), maxX = Math.max(...xs);
-    const minY = Math.min(...ys), maxY = Math.max(...ys);
-    const bboxW = Math.max(maxX - minX, 1);
-    const bboxH = Math.max(maxY - minY, 1);
-    const pad = 46;
-    const viewW = 280, viewH = 220;
-    const scale = Math.min((viewW - pad*2) / bboxW, (viewH - pad*2) / bboxH);
-    const offX = (viewW - bboxW * scale) / 2 - minX * scale;
-    const offY = (viewH - bboxH * scale) / 2 - minY * scale;
-
-    function toSvg(p){ return {x: p.x * scale + offX, y: p.y * scale + offY}; }
-    const svgPts = points.map(toSvg);
-
-    let segs = '', markers = '', labels = '', hitZones = '';
-    let wallN = 0, openN = 0;
-    const tags = [];
-    for (let i = 0; i < all.length; i++){
-      const a = svgPts[i], b = svgPts[i+1];
-      const piece = all[i];
-      const isOpening = piece.type === 'Opening';
-      const isDraft = draftPiece && piece === draftPiece;
-      const stroke = isOpening ? '#f5b342' : '#5b8cff';
-      const opacity = isDraft ? '0.45' : '1';
-      const dash = (isOpening || isDraft) ? 'stroke-dasharray="5,4"' : '';
-      segs += `<line x1="${a.x.toFixed(1)}" y1="${a.y.toFixed(1)}" x2="${b.x.toFixed(1)}" y2="${b.y.toFixed(1)}" stroke="${stroke}" stroke-width="3" opacity="${opacity}" ${dash} stroke-linecap="round" />`;
-
-      const dxs = b.x - a.x, dys = b.y - a.y;
-      const segLen = Math.hypot(dxs, dys) || 1;
-
-      // draw start/end corner markers inset from the shared vertex, so two
-      // walls meeting at one point never draw directly on top of each other
-      if (!isOpening && !isDraft){
-        const inset = Math.min(9, segLen * 0.3);
-        const ux = dxs / segLen, uy = dys / segLen;
-        const startPt = {x: a.x + ux * inset, y: a.y + uy * inset};
-        const endPt = {x: b.x - ux * inset, y: b.y - uy * inset};
-        markers += markerShape(piece.startJoint, startPt.x, startPt.y);
-        markers += markerShape(piece.endJoint, endPt.x, endPt.y);
-      }
-
-      let tag;
-      if (isDraft){
-        tag = 'new';
-      } else if (isOpening){
-        openN++;
-        tag = 'O' + openN;
-      } else {
-        wallN++;
-        tag = String(wallN);
-      }
-      tags.push(tag);
-
-      // dimension label: parallel to the wall, placed outside the room
-      // polygon (not inside it), moved further out with a leader line if
-      // the wall is too short to hold the text inline
-      const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
-      // this walk is traced clockwise, so the room's interior is always on
-      // the right-hand side of travel — the outside is the left-hand side
-      const nx = dys / segLen, ny = -dxs / segLen;
-
-      let angleDeg = Math.atan2(dys, dxs) * 180 / Math.PI;
-      if (angleDeg > 90) angleDeg -= 180;
-      if (angleDeg < -90) angleDeg += 180;
-
-      const labelText = `${tag} ${Math.round(piece.length)}`;
-      const estWidth = labelText.length * 5.4 + 4;
-      const fitsInline = segLen >= estWidth + 6;
-      const offset = fitsInline ? 16 : 28;
-      const lx = mx + nx * offset;
-      const ly = my + ny * offset;
-      const labelColor = isDraft ? '#5c6472' : '#8b93a1';
-      const tagColor = isDraft ? '#5c6472' : '#4fd1c5';
-
-      if (!fitsInline){
-        const leaderStartX = mx + nx * 4, leaderStartY = my + ny * 4;
-        const leaderEndX = mx + nx * (offset - 6), leaderEndY = my + ny * (offset - 6);
-        labels += `<line x1="${leaderStartX.toFixed(1)}" y1="${leaderStartY.toFixed(1)}" x2="${leaderEndX.toFixed(1)}" y2="${leaderEndY.toFixed(1)}" stroke="#3a4048" stroke-width="1" />`;
-      }
-
-      labels += `<text x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" text-anchor="middle" fill="${labelColor}" font-size="8.2" font-family="monospace" transform="rotate(${angleDeg.toFixed(1)} ${lx.toFixed(1)} ${ly.toFixed(1)})"><tspan font-weight="bold" fill="${tagColor}">${tag}</tspan> ${Math.round(piece.length)}</text>`;
-    }
-
-    // tappable corner-detail hotspots, one per Wall-to-Wall junction
-    for (let i = 0; i < all.length - 1; i++){
-      const before = all[i], after = all[i+1];
-      const beforeIsDraft = draftPiece && before === draftPiece;
-      const afterIsDraft = draftPiece && after === draftPiece;
-      if (before.type !== 'Wall' || after.type !== 'Wall' || beforeIsDraft || afterIsDraft) continue;
-      const v = svgPts[i+1];
-      hitZones += `<circle class="corner-hit" data-idx="${i}" cx="${v.x.toFixed(1)}" cy="${v.y.toFixed(1)}" r="12" fill="transparent" style="cursor:pointer;" />`;
-    }
-
-    svg.innerHTML = `
-      <g class="viewport-g">
-        ${segs}
-        ${markers}
-        ${labels}
-        <circle cx="${svgPts[0].x.toFixed(1)}" cy="${svgPts[0].y.toFixed(1)}" r="3" fill="#eef1f5" />
-        ${hitZones}
-      </g>
-    `;
-    applyZoomTransform(svgId);
-
-    svg.querySelectorAll('.corner-hit').forEach(el => {
-      const i = parseInt(el.dataset.idx, 10);
-      el.addEventListener('click', () => {
-        if (justPanned) return;
-        openCornerDetail(
-          {tag: tags[i], length: all[i].length, joint: all[i].endJoint},
-          {tag: tags[i+1], length: all[i+1].length, joint: all[i+1].startJoint}
-        );
+        if (!isNaN(r.total)){ doorTotal += r.total; doorValid = true; }
       });
-    });
-  }
 
-  /* ===================== CORNER DETAIL ===================== */
-  function boardEndPath(kind, near, far, crossA, crossB, flip){
-    // "near"/"far" run along the board's length axis; crossA/crossB run
-    // across it. flip mirrors the diagonal for External vs Internal.
-    if (kind === 'Square'){
-      return `M ${near} ${crossA} L ${near} ${crossB}`;
-    }
-    const a = flip ? near : far;
-    const b = flip ? far : near;
-    return `M ${a} ${crossA} L ${b} ${crossB}`;
-  }
-
-  function cornerDetailSVG(before, after){
-    // Board A: horizontal, approaching the corner from the left.
-    const yTopA = 66, yBotA = 92, xA0 = 18, xA1 = 108;
-    // Board B: vertical, leaving the corner downward.
-    const xTopB = 132, xBotB = 158, yB0 = 108, yB1 = 196;
-
-    const cutA = boardEndPath(before.joint, xA1, xA1 - 16, yTopA, yBotA, before.joint === 'External');
-    const cutB = boardEndPath(after.joint, yB0, yB0 + 16, xTopB, xBotB, after.joint === 'External');
-
-    return `
-      <svg viewBox="0 0 220 220" width="100%" height="220" style="display:block;">
-        <rect x="${xA0}" y="${yTopA}" width="${xA1 - 16 - xA0}" height="${yBotA - yTopA}" fill="#20242c" stroke="#2c313a" />
-        <path d="${cutA}" stroke="${colorFor(before.joint)}" stroke-width="3" fill="none" />
-        ${markerShape(before.joint, xA1 - 4, (yTopA + yBotA) / 2, 5)}
-        <text x="${(xA0 + xA1) / 2 - 2}" y="${yTopA - 8}" text-anchor="middle" font-size="10" fill="#8b93a1" font-family="monospace">Wall ${before.tag} · ${Math.round(before.length)}mm</text>
-
-        <rect x="${xTopB}" y="${yB0 + 16}" width="${xBotB - xTopB}" height="${yB1 - 16 - (yB0 + 16)}" fill="#20242c" stroke="#2c313a" />
-        <path d="${cutB}" stroke="${colorFor(after.joint)}" stroke-width="3" fill="none" />
-        ${markerShape(after.joint, (xTopB + xBotB) / 2, yB0 + 4, 5)}
-        <text x="${xBotB + 8}" y="${(yB0 + yB1) / 2}" text-anchor="start" font-size="10" fill="#8b93a1" font-family="monospace" transform="rotate(90 ${xBotB + 8} ${(yB0 + yB1) / 2})">Wall ${after.tag} · ${Math.round(after.length)}mm</text>
-
-        <line x1="${xA1}" y1="${(yTopA + yBotA) / 2}" x2="${xTopB + 6}" y2="${yB0 + 9}" stroke="#3a4048" stroke-width="1" stroke-dasharray="3,3" />
-      </svg>
-    `;
-  }
-
-  function openCornerDetail(before, after){
-    const body = document.getElementById('cornerModalBody');
-    body.innerHTML = `
-      ${cornerDetailSVG(before, after)}
-      <div style="margin-top:8px;">
-        <div class="corner-piece-row">
-          <span class="cp-name">Wall ${before.tag}</span>
-          <span class="cp-joint">${jointDot(before.joint)}end: ${before.joint}</span>
-        </div>
-        <div class="corner-piece-row">
-          <span class="cp-name">Wall ${after.tag}</span>
-          <span class="cp-joint">${jointDot(after.joint)}start: ${after.joint}</span>
-        </div>
-      </div>
-    `;
-    document.getElementById('cornerModal').style.display = 'flex';
-  }
-
-  document.getElementById('cornerModalClose').addEventListener('click', () => {
-    document.getElementById('cornerModal').style.display = 'none';
-  });
-  document.getElementById('cornerModal').addEventListener('click', (e) => {
-    if (e.target.id === 'cornerModal') e.currentTarget.style.display = 'none';
-  });
-
-  /* ===================== STAGE NAVIGATION ===================== */
-  const STAGE_SUBS = {
-    measure: 'Watch the plan build as you add each wall. Tap any entry below to edit it.',
-    review: 'Check the plan and every measurement before generating the cutting list.',
-    cut: 'Cutting list — ready for the saw.'
-  };
-
-  function showStage(stage){
-    document.getElementById('measureView').style.display = stage === 'measure' ? 'block' : 'none';
-    document.getElementById('reviewView').style.display = stage === 'review' ? 'block' : 'none';
-    document.getElementById('cutView').style.display = stage === 'cut' ? 'block' : 'none';
-    document.getElementById('headerSub').textContent = STAGE_SUBS[stage];
-    document.querySelectorAll('.stepper button').forEach(b => b.classList.toggle('active', b.dataset.stage === stage));
-    window.scrollTo(0, 0);
-    if (stage === 'review') renderReview();
-    if (stage === 'cut') renderCutView();
-  }
-
-  document.querySelectorAll('.stepper button').forEach(btn => {
-    btn.addEventListener('click', () => showStage(btn.dataset.stage));
-  });
-  document.getElementById('finishBtn').addEventListener('click', () => showStage('review'));
-  document.getElementById('backToMeasureFromReviewBtn').addEventListener('click', () => showStage('measure'));
-  document.getElementById('continueToCutBtn').addEventListener('click', () => showStage('cut'));
-  document.getElementById('backToMeasureBtn').addEventListener('click', () => showStage('review'));
-
-  function computeTotals(){
-    const h = parseFloat(document.getElementById('skirtThickness').value);
-    let totalBack = 0, totalOrder = 0, anyValid = false, wallCount = 0, openCount = 0;
-    pieces.forEach(piece => {
-      if (piece.type === 'Opening'){ openCount++; return; }
-      wallCount++;
-      const {back, front} = pieceCut(piece, h);
-      if (!isNaN(back)){
-        totalBack += back;
-        totalOrder += Math.max(back, isNaN(front) ? back : front);
-        anyValid = true;
-      }
-    });
-    return {wallCount, openCount, totalBack, totalOrder, anyValid, h};
-  }
-
-  function renderReview(){
-    const {wallCount, openCount, totalBack, totalOrder, anyValid, h} = computeTotals();
-    drawFloorPlan(pieces, h, null, 'reviewPlanSVG');
-
-    document.getElementById('reviewWallCount').textContent = wallCount;
-    document.getElementById('reviewOpenCount').textContent = openCount;
-    document.getElementById('reviewTotalBack').textContent = anyValid ? fmt(totalBack) : '—';
-    document.getElementById('reviewTotalOrder').textContent = anyValid ? fmt(totalOrder) : '—';
-
-    const listEl = document.getElementById('reviewList');
-    listEl.innerHTML = '';
-    let wallN = 0, openN = 0;
-    pieces.forEach(piece => {
-      const row = document.createElement('div');
-      row.className = 'review-row';
-      row.style.borderTop = listEl.children.length ? '1px solid var(--line)' : 'none';
-      if (piece.type === 'Wall'){
-        wallN++;
-        const {back, front} = pieceCut(piece, h);
-        row.innerHTML = `
-          <div class="num">${wallN}</div>
-          <div class="info">
-            <div class="main">${fmt(piece.length)} <span style="color:var(--muted);font-weight:400;">(back)</span></div>
-            <div class="sub">${jointDot(piece.startJoint)}${piece.startJoint} → ${jointDot(piece.endJoint)}${piece.endJoint} &nbsp;·&nbsp; front ${fmt(front)}</div>
-          </div>
-        `;
-      } else {
-        openN++;
-        row.innerHTML = `
-          <div class="num">O${openN}</div>
-          <div class="info">
-            <div class="main">${piece.label || 'Opening'}</div>
-            <div class="sub">${Math.round(piece.length)} mm — no skirting needed</div>
-          </div>
-        `;
-      }
-      listEl.appendChild(row);
+      card.querySelector('[data-out="doorTotal"]').textContent = doorValid ? fmt(doorTotal) : '—';
+      if (doorValid){ grand += doorTotal; anyValid = true; }
     });
 
-    const openings = pieces.filter(p => p.type === 'Opening');
-    const openingsCard = document.getElementById('reviewOpeningsCard');
-    if (openings.length === 0){
-      openingsCard.style.display = 'none';
+    document.getElementById('grandTotal').textContent = anyValid ? fmt(grand) : '—';
+  }
+
+  listReveal.addEventListener('input', calcList);
+  listArchWidth.addEventListener('input', calcList);
+
+  /* seed with two doors to start */
+  makeDoorCard('Door 01', {legLeft:2040, legRight:2040, openWidth:900}, {legLeft:2040, legRight:2040, openWidth:900});
+  makeDoorCard('Door 02', {legLeft:2040, legRight:2040, openWidth:900}, {legLeft:2040, legRight:2040, openWidth:900});
+  calcList();
+
+  /* ===================== MODE TOGGLE ===================== */
+  const modeToggle = document.getElementById('modeToggle');
+  const singleModeEl = document.getElementById('singleMode');
+  const listModeEl = document.getElementById('listMode');
+
+  function applyMode(){
+    if (modeToggle.checked){
+      singleModeEl.style.display = 'none';
+      listModeEl.style.display = 'block';
     } else {
-      openingsCard.style.display = 'block';
-      document.getElementById('reviewOpeningsList').innerHTML = openings.map((o, i) => `
-        <div class="results-row" style="border-top:${i===0?'none':'1px solid var(--line)'};">
-          <span class="lbl">${o.label || 'Opening'}</span>
-          <span class="val">${Math.round(o.length)} mm</span>
-        </div>
-      `).join('');
+      singleModeEl.style.display = 'block';
+      listModeEl.style.display = 'none';
     }
   }
-
-  function updatePlanPreview(){
-    const h = parseFloat(document.getElementById('skirtThickness').value);
-    const draft = readEntryForm();
-    drawFloorPlan(pieces, h, isNaN(draft.length) ? null : draft, 'planSVG');
-  }
-
-  /* ===================== RENDER ALL ===================== */
-  function renderAll(){
-    renderHistory();
-    updateTotals();
-    updatePlanPreview();
-  }
-
-  /* ===================== CUT VIEW (Saw Mode) ===================== */
-  const cutState = {}; // piece.id -> ticked boolean, kept for this session
-
-  function renderCutView(){
-    const h = parseFloat(document.getElementById('skirtThickness').value);
-    drawFloorPlan(pieces, h, null, 'cutPlanSVG');
-
-    const roomName = document.getElementById('roomName').value.trim() || 'Room';
-    document.getElementById('cutRoomNameLabel').textContent = roomName;
-
-    const cutListEl = document.getElementById('cutList');
-    cutListEl.innerHTML = '';
-    let wallN = 0, totalOrder = 0, anyValid = false;
-
-    pieces.filter(p => p.type === 'Wall').forEach(piece => {
-      wallN++;
-      const {back, front} = pieceCut(piece, h);
-      const orderLen = isNaN(back) ? NaN : Math.max(back, isNaN(front) ? back : front);
-      if (!isNaN(orderLen)){ totalOrder += orderLen; anyValid = true; }
-
-      const row = document.createElement('label');
-      row.className = 'row-card';
-      row.style.display = 'flex';
-      row.style.alignItems = 'center';
-      row.style.gap = '12px';
-      row.style.padding = '13px 14px';
-      row.style.cursor = 'pointer';
-      const checked = !!cutState[piece.id];
-      row.innerHTML = `
-        <input type="checkbox" data-role="tick" ${checked ? 'checked' : ''} style="width:19px;height:19px;flex-shrink:0;accent-color:#4fd1c5;">
-        <div class="num" style="width:24px;height:24px;flex-shrink:0;">${wallN}</div>
-        <div style="flex:1;min-width:0;${checked ? 'opacity:.4;text-decoration:line-through;' : ''}">
-          <div style="display:flex;gap:14px;">
-            <div><span style="font-size:9.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;">Back</span><div class="main" style="font-size:15px;font-weight:700;color:var(--accent-2);">${fmt(back)}</div></div>
-            <div><span style="font-size:9.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;">Front</span><div class="main" style="font-size:15px;font-weight:700;color:var(--accent);">${fmt(front)}</div></div>
-          </div>
-          <div class="sub" style="font-size:11.5px;color:var(--muted);margin-top:4px;">${jointDot(piece.startJoint)}${piece.startJoint} → ${jointDot(piece.endJoint)}${piece.endJoint}</div>
-        </div>
-      `;
-      row.querySelector('[data-role="tick"]').addEventListener('change', (e) => {
-        cutState[piece.id] = e.target.checked;
-        renderCutView();
-      });
-      cutListEl.appendChild(row);
-    });
-
-    document.getElementById('cutPieceCount').textContent = wallN + ' pieces';
-    document.getElementById('cutTotalOrder').textContent = anyValid ? fmt(totalOrder) : '—';
-
-    const openings = pieces.filter(p => p.type === 'Opening');
-    const openingsCard = document.getElementById('cutOpeningsCard');
-    const openingsList = document.getElementById('cutOpeningsList');
-    if (openings.length === 0){
-      openingsCard.style.display = 'none';
-    } else {
-      openingsCard.style.display = 'block';
-      openingsList.innerHTML = openings.map((o, i) => `
-        <div class="results-row" style="border-top:${i===0?'none':'1px solid var(--line)'};">
-          <span class="lbl">${o.label || 'Opening'}</span>
-          <span class="val">${Math.round(o.length)} mm</span>
-        </div>
-      `).join('');
-    }
-  }
-
-  /* ===================== SAVE / LOAD ===================== */
-  function loadRooms(){
-    try{
-      const raw = localStorage.getItem(STORAGE_KEY);
-      return raw ? JSON.parse(raw) : {};
-    }catch(err){ return {}; }
-  }
-  function persistRooms(rooms){
-    try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(rooms)); }catch(err){}
-  }
-  function currentRoomState(){
-    return {
-      skirtThickness: document.getElementById('skirtThickness').value,
-      internalStyle: roomInternalStyle,
-      pieces,
-      savedAt: new Date().toISOString()
-    };
-  }
-  function renderSavedList(){
-    const rooms = loadRooms();
-    const names = Object.keys(rooms);
-    const el = document.getElementById('savedList');
-    if (names.length === 0){
-      el.innerHTML = '<p class="empty-note">No saved rooms yet</p>';
-      return;
-    }
-    el.innerHTML = names.map(name => {
-      const r = rooms[name];
-      const dateStr = r.savedAt ? new Date(r.savedAt).toLocaleDateString() : '';
-      return `
-        <div class="saved-item">
-          <div>
-            <div class="name">${name}</div>
-            <div class="meta">${r.pieces.length} entries · saved ${dateStr}</div>
-          </div>
-          <div class="actions">
-            <button class="mini-btn load" data-load="${name}">Load</button>
-            <button class="mini-btn del" data-del="${name}">Delete</button>
-          </div>
-        </div>
-      `;
-    }).join('');
-    el.querySelectorAll('[data-load]').forEach(btn => btn.addEventListener('click', () => loadRoom(btn.dataset.load)));
-    el.querySelectorAll('[data-del]').forEach(btn => btn.addEventListener('click', () => {
-      const rooms = loadRooms();
-      delete rooms[btn.dataset.del];
-      persistRooms(rooms);
-      renderSavedList();
-    }));
-  }
-  function setInternalStyleUI(style){
-    roomInternalStyle = style;
-    document.querySelectorAll('#internalStyleSetting button').forEach(b => b.classList.toggle('active', b.dataset.style === style));
-  }
-
-  function loadRoom(name){
-    const rooms = loadRooms();
-    const r = rooms[name];
-    if (!r) return;
-    pushHistory();
-    document.getElementById('roomName').value = name;
-    document.getElementById('skirtThickness').value = r.skirtThickness;
-    setInternalStyleUI(r.internalStyle || 'Mitre');
-    pieces = r.pieces.map(p => Object.assign({}, p));
-    nextId = Math.max(0, ...pieces.map(p => p.id)) + 1;
-    expandedId = null;
-    renderAll();
-  }
-  document.getElementById('saveBtn').addEventListener('click', () => {
-    const name = document.getElementById('roomName').value.trim() || 'Untitled room';
-    const rooms = loadRooms();
-    rooms[name] = currentRoomState();
-    persistRooms(rooms);
-    renderSavedList();
-  });
-  document.getElementById('clearBtn').addEventListener('click', () => {
-    pushHistory();
-    pieces = [];
-    nextId = 1;
-    expandedId = null;
-    setInternalStyleUI('Mitre');
-    document.getElementById('roomName').value = 'Room 01';
-    renderAll();
-  });
-
-  /* ===================== INIT ===================== */
-  renderAll();
-  renderSavedList();
-
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('sw.js').catch(() => {});
-    });
-  }
+  modeToggle.addEventListener('change', applyMode);
+  applyMode();
 </script>
 </body>
 </html>
