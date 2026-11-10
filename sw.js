@@ -1,4 +1,4 @@
-const CACHE_NAME = 'carpentry-app-v2';
+const CACHE_NAME = 'carpentry-app-v3';
 const CORE_ASSETS = [
   './',
   './index.html',
@@ -8,7 +8,9 @@ const CORE_ASSETS = [
   './architrave/index.html',
   './skirting/index.html',
   './doors/index.html',
-  './doors/data.js'
+  './doors/data.js',
+  './doors/plan-data.js',
+  './doors/plans/first-floor.svg'
 ];
 
 self.addEventListener('install', (event) => {

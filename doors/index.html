@@ -149,6 +149,17 @@
   .fine{font-size:11.5px;color:var(--muted);line-height:1.45;margin:10px 0 0;}
   .fine i{font-style:normal;color:var(--danger);font-weight:600;}
 
+  .plan{position:relative;width:100%;aspect-ratio:1;overflow:hidden;border-radius:12px;background:#fff;border:1px solid var(--line);cursor:zoom-out;}
+  .plan.wide{cursor:zoom-in;}
+  .plan img{position:absolute;max-width:none;display:block;}
+  .plan .ring{
+    position:absolute;left:50%;top:50%;width:26%;height:26%;transform:translate(-50%,-50%);
+    border:3px solid #e0245e;border-radius:50%;box-shadow:0 0 0 2px rgba(255,255,255,.85);pointer-events:none;
+  }
+  .plan.wide .ring{width:9%;height:9%;}
+  .swing{font-size:15px;line-height:1.4;font-weight:600;margin:0 0 12px;}
+  .swing small{display:block;font-weight:400;font-size:12px;color:var(--muted);margin-top:3px;}
+
   .comments{list-style:none;margin:0;padding:0;font-size:14px;line-height:1.45;}
   .comments li{padding:9px 0 9px 12px;border-left:3px solid var(--line-2);margin-bottom:8px;}
   .comments li:last-child{margin-bottom:0;}
@@ -280,6 +291,7 @@
 </div>
 
 <script src="data.js"></script>
+<script src="plan-data.js"></script>
 <script>
 (function(){
   'use strict';
@@ -471,7 +483,37 @@
     if (d.kind === 'Riser') return '';
     return '100 mm (schedule default — nothing else noted)';
   }
-  function showDoor(id){
+  /* ---------- plan drawing: where the door is, and its swing ---------- */
+  var PLANS = window.PLANS || {floors:{}, doors:{}};
+  var planWide = false;
+  function swingText(sw, d){
+    if (!sw) return '';
+    var parts = [];
+    if (sw.way === 'in') parts.push('Opens into the room');
+    else if (sw.way === 'out') parts.push('Opens out towards the corridor / stair');
+    if (sw.hinge){
+      var from = sw.way ? ' from the corridor side' : '';
+      parts.push('hinges on the ' + sw.hinge + ' as you ' + sw.as + from);
+    } else parts.push('double doors');
+    var t = parts.join(' · ');
+    return t.charAt(0).toUpperCase() + t.slice(1);
+  }
+  function planCard(d){
+    var pd = PLANS.doors[d.ref], fl = pd && PLANS.floors[pd.f];
+    if (!pd || !fl) return '';
+    var span = planWide ? 420 : 150;                 // drawing points shown across the box
+    var css = 'width:' + (100 * fl.w / span).toFixed(2) + '%;left:' + (100 * (0.5 - (pd.x - fl.x) / span)).toFixed(2) +
+              '%;top:' + (100 * (0.5 - (pd.y - fl.y) / span)).toFixed(2) + '%';
+    var sw = d.off ? '' : swingText(pd.sw, d);
+    return '<div class="card"><h2>On the plan</h2>' +
+      (sw ? '<p class="swing">' + esc(sw) + '<small>Read off the plan drawing and checked against the scheduled leaf width. Confirm on site.</small></p>' : '') +
+      '<div class="plan' + (planWide ? ' wide' : '') + '" id="dPlan" role="button" aria-label="Plan around this door. Tap to zoom ' + (planWide ? 'in' : 'out') + '">' +
+        '<img src="' + esc(fl.src) + '" alt="Plan drawing around door ' + esc(d.ref) + '" style="' + css + '"><span class="ring"></span></div>' +
+      '<p class="fine">Tap the plan to zoom ' + (planWide ? 'in' : 'out') + '. Drawing ' + esc(fl.drawing) + ' rev ' + esc(fl.rev) +
+        (sw ? '' : ' — swing not confirmed automatically for this door, read it from the drawing') + '.</p></div>';
+  }
+
+  function showDoor(id, keepScroll){
     var d = DOORS[id];
     if (!d){ closeDoor(); return; }
     var pos = current.indexOf(d);
@@ -512,6 +554,8 @@
         '</div>';
     }
 
+    h += planCard(d);
+
     if (d.comments && d.comments.length){
       h += '<div class="card"><h2>Comments</h2><ul class="comments">' + d.comments.map(function(c){
         return '<li class="' + (c.red ? 'red' : c.bold ? 'bold' : '') + '">' + esc(c.t) + '</li>';
@@ -548,13 +592,13 @@
       '<dt>Row revision</dt>' + val(d.rev) +
       '<dt>Schedule page</dt>' + val(String(d.page)) +
       '</dl></div>' +
-      '<footer>Handing / swing is not in the schedule — check the GA drawings.<br>' + esc(sourceLine()) + '</footer>';
+      '<footer>' + (PLANS.doors[d.ref] ? '' : 'Handing / swing is not in the schedule — check the GA drawings.<br>') + esc(sourceLine()) + '</footer>';
 
     $('detail').innerHTML = h;
     $('main').style.display = 'none';
     $('tabs').style.display = 'none';
     $('detail').style.display = 'block';
-    window.scrollTo(0, 0);
+    if (!keepScroll) window.scrollTo(0, 0);
   }
   function closeDoor(){
     $('detail').style.display = 'none';
@@ -660,7 +704,7 @@
   var listScroll = 0;
   function route(){
     var m = /^#door\/(\d+)$/.exec(location.hash);
-    if (m) showDoor(+m[1]);
+    if (m){ planWide = false; showDoor(+m[1]); }
     else { closeDoor(); renderList(); window.scrollTo(0, listScroll); }
   }
   function openDoor(id, replace){
@@ -685,13 +729,18 @@
     var b = e.target.closest('.door'); if (b) openDoor(+b.getAttribute('data-id'));
   });
   $('detail').addEventListener('click', function(e){
+    if (e.target.closest('#dPlan')){
+      planWide = !planWide;
+      showDoor(+(/(\d+)$/.exec(location.hash) || [])[1], true);
+      return;
+    }
     var b = e.target.closest('button'); if (!b) return;
     if (b.id === 'dBack'){ if (history.length > 1) history.back(); else location.hash = ''; }
     else if (b.id === 'dPin'){
       var d = DOORS[+(/(\d+)$/.exec(location.hash) || [])[1]]; if (!d) return;
       var k = pinKey(d);
       if (pins[k]) delete pins[k]; else pins[k] = 1;
-      savePins(); showDoor(d.id);
+      savePins(); showDoor(d.id, true);
     }
     else if (b.hasAttribute('data-id')) openDoor(+b.getAttribute('data-id'), true);
   });
