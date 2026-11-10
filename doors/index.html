@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Door Schedule</title>
+<meta name="theme-color" content="#0b0d10">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Doors">
+<link rel="icon" href="../icon-192.png">
+<link rel="apple-touch-icon" href="../icon-192.png">
+<style>
+  :root{
+    --bg:#0b0d10;
+    --panel:#15181d;
+    --panel-2:#1c2027;
+    --panel-3:#20242c;
+    --line: rgba(255,255,255,0.08);
+    --line-2: rgba(255,255,255,0.16);
+    --text:#eef1f5;
+    --muted:#8b93a1;
+    --accent:#4fd1c5;
+    --accent-2:#5b8cff;
+    --warn:#f5b342;
+    --danger:#ff6b6b;
+    --fd30:#f5b342;
+    --fd60:#ff7a59;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:'Inter','Segoe UI',system-ui,-apple-system,sans-serif;
+    min-height:100vh;
+    padding:0 16px 96px;
+    -webkit-tap-highlight-color:transparent;
+  }
+  button{font:inherit;color:inherit;}
+  .wrap{max-width:560px;margin:0 auto;}
+
+  header.top{padding:18px 0 12px;display:flex;align-items:flex-start;gap:10px;}
+  .back{
+    flex-shrink:0;width:38px;height:38px;border-radius:10px;
+    background:var(--panel);border:1px solid var(--line);color:var(--muted);
+    display:flex;align-items:center;justify-content:center;
+    text-decoration:none;font-size:20px;line-height:1;
+  }
+  .eyebrow{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);font-weight:600;margin:0 0 4px;}
+  h1{font-weight:700;font-size:23px;line-height:1.2;letter-spacing:-0.02em;margin:0 0 4px;}
+  .sub{font-size:12.5px;color:var(--muted);line-height:1.45;margin:0;}
+
+  /* search + filters stay reachable while scrolling */
+  .sticky{position:sticky;top:0;z-index:5;background:var(--bg);padding:8px 0 10px;margin:0 -16px;padding-left:16px;padding-right:16px;border-bottom:1px solid var(--line);}
+  .search{
+    display:flex;align-items:center;gap:8px;background:var(--panel);
+    border:1px solid var(--line);border-radius:12px;padding:0 12px;
+  }
+  .search:focus-within{border-color:var(--accent);}
+  .search input{
+    flex:1;min-width:0;background:transparent;border:none;outline:none;color:var(--text);
+    font-size:16px;padding:13px 0;
+  }
+  .search input::placeholder{color:#5d6573;}
+  .search .x{background:none;border:none;color:var(--muted);font-size:20px;padding:6px;display:none;cursor:pointer;}
+  .chips{display:flex;gap:6px;overflow-x:auto;padding:10px 16px 0;margin:0 -16px;scrollbar-width:none;}
+  .chips::-webkit-scrollbar{display:none;}
+  .chip{
+    flex-shrink:0;background:var(--panel);border:1px solid var(--line);border-radius:999px;
+    padding:8px 13px;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer;white-space:nowrap;
+  }
+  .chip.on{background:var(--accent);border-color:var(--accent);color:#06211e;}
+  .chip.filter{display:flex;align-items:center;gap:6px;}
+  .chip.filter.has{border-color:var(--accent);color:var(--accent);}
+  .count-row{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--muted);margin:12px 2px 8px;}
+  .count-row button{background:none;border:none;color:var(--accent);font-size:12px;font-weight:600;padding:4px;cursor:pointer;}
+
+  /* door list */
+  .floor-head{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:600;margin:18px 2px 8px;}
+  .door{
+    display:block;width:100%;text-align:left;cursor:pointer;
+    background:var(--panel);border:1px solid var(--line);border-radius:14px;
+    padding:13px 14px;margin-bottom:8px;
+  }
+  .door:active{background:var(--panel-2);}
+  .door .r1{display:flex;align-items:center;gap:8px;margin-bottom:3px;}
+  .ref{font-family:'SF Mono','JetBrains Mono',ui-monospace,Menlo,monospace;font-weight:700;font-size:16px;letter-spacing:-0.01em;}
+  .door .loc{font-size:13.5px;line-height:1.35;color:var(--text);margin-bottom:8px;}
+  .door .r3{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:12px;color:var(--muted);}
+  .door.off{opacity:.55;}
+  .door.off .ref,.door.off .loc{text-decoration:line-through;text-decoration-color:rgba(255,255,255,.4);}
+  .spacer{flex:1;}
+  .pin-dot{color:var(--accent);font-size:13px;}
+
+  .tag{
+    display:inline-block;font-size:11px;font-weight:700;letter-spacing:.02em;
+    border-radius:6px;padding:2px 7px;border:1px solid var(--line-2);color:var(--muted);white-space:nowrap;
+  }
+  .tag.fd30{color:var(--fd30);border-color:rgba(245,179,66,.45);}
+  .tag.fd60{color:var(--fd60);border-color:rgba(255,122,89,.5);}
+  .tag.new{color:var(--accent);border-color:rgba(79,209,197,.4);}
+  .tag.warn{color:var(--warn);border-color:rgba(245,179,66,.45);}
+  .tag.off{color:var(--danger);border-color:rgba(255,107,107,.45);}
+  .dim{font-family:'SF Mono','JetBrains Mono',ui-monospace,Menlo,monospace;color:var(--text);font-size:12.5px;}
+
+  .empty{text-align:center;color:var(--muted);font-size:13.5px;padding:44px 20px;line-height:1.6;}
+
+  /* cards shared by detail / overview / notes */
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:12px;}
+  .card h2{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:600;margin:0 0 12px;}
+  .kv{display:grid;grid-template-columns:118px 1fr;gap:9px 12px;font-size:14px;line-height:1.4;}
+  .kv dt{color:var(--muted);font-size:12.5px;padding-top:1px;}
+  .kv dd{margin:0;overflow-wrap:anywhere;}
+  .kv dd.na{color:#5d6573;}
+  .kv dd.red{color:var(--danger);}
+
+  /* detail screen */
+  #detail{display:none;}
+  .d-head{padding:18px 0 14px;}
+  .d-top{display:flex;align-items:center;gap:10px;margin-bottom:14px;}
+  .d-top .floor{flex:1;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);font-weight:600;}
+  .icon-btn{
+    width:38px;height:38px;border-radius:10px;flex-shrink:0;cursor:pointer;
+    background:var(--panel);border:1px solid var(--line);color:var(--muted);
+    display:flex;align-items:center;justify-content:center;font-size:17px;
+  }
+  .icon-btn.on{color:var(--accent);border-color:var(--accent);}
+  .icon-btn:disabled{opacity:.3;}
+  .d-ref{font-family:'SF Mono','JetBrains Mono',ui-monospace,Menlo,monospace;font-size:30px;font-weight:700;letter-spacing:-0.02em;margin:0 0 4px;}
+  .d-loc{font-size:16px;line-height:1.35;margin:0 0 10px;}
+  .d-tags{display:flex;flex-wrap:wrap;gap:6px;}
+  .banner{border-radius:12px;padding:12px 14px;font-size:13.5px;line-height:1.45;margin-bottom:12px;border:1px solid;}
+  .banner.warn{background:rgba(245,179,66,.1);border-color:rgba(245,179,66,.4);color:#ffd58a;}
+  .banner.off{background:rgba(255,107,107,.1);border-color:rgba(255,107,107,.4);color:#ffb3b3;}
+  .banner.info{background:rgba(91,140,255,.1);border-color:rgba(91,140,255,.4);color:#c3d4ff;}
+  .banner b{display:block;margin-bottom:2px;}
+
+  .sizes{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .size{background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:12px;}
+  .size .lbl{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:8px;}
+  .size .row{display:flex;justify-content:space-between;align-items:baseline;gap:8px;padding:3px 0;}
+  .size .row span{font-size:12px;color:var(--muted);}
+  .size .row b{font-family:'SF Mono','JetBrains Mono',ui-monospace,Menlo,monospace;font-size:21px;font-weight:700;text-align:right;}
+  .size .row b.txt{font-family:inherit;font-size:13px;font-weight:600;line-height:1.3;}
+  .size .row b.tbc{color:var(--danger);}
+  .size .note{font-size:11.5px;color:var(--warn);line-height:1.35;margin-top:4px;}
+  .fine{font-size:11.5px;color:var(--muted);line-height:1.45;margin:10px 0 0;}
+  .fine i{font-style:normal;color:var(--danger);font-weight:600;}
+
+  .comments{list-style:none;margin:0;padding:0;font-size:14px;line-height:1.45;}
+  .comments li{padding:9px 0 9px 12px;border-left:3px solid var(--line-2);margin-bottom:8px;}
+  .comments li:last-child{margin-bottom:0;}
+  .comments li.red{border-left-color:var(--danger);color:#ffc9c9;font-weight:600;}
+  .comments li.bold{border-left-color:var(--accent-2);font-weight:600;}
+
+  /* overview */
+  .tiles{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px;}
+  .tile{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:13px 12px;text-align:left;cursor:pointer;}
+  .tile b{display:block;font-size:24px;font-weight:700;letter-spacing:-0.02em;}
+  .tile span{font-size:11.5px;color:var(--muted);line-height:1.3;display:block;margin-top:2px;}
+  .bars{display:flex;flex-direction:column;gap:4px;}
+  .bar{
+    display:grid;grid-template-columns:104px 1fr 34px;align-items:center;gap:10px;width:100%;
+    background:none;border:none;padding:7px 0;text-align:left;cursor:pointer;font-size:13.5px;
+  }
+  .bar .track{display:block;height:8px;border-radius:4px;background:var(--bg);overflow:hidden;}
+  .bar .fill{display:block;height:100%;border-radius:4px;background:var(--accent-2);}
+  .bar .n{text-align:right;font-weight:700;font-variant-numeric:tabular-nums;}
+  .tbl-wrap{overflow-x:auto;margin:0 -4px;}
+  table{border-collapse:collapse;width:100%;font-size:13px;font-variant-numeric:tabular-nums;}
+  th,td{padding:8px 6px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap;}
+  th{font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600;}
+  th:first-child,td:first-child{text-align:left;}
+  tr:last-child td{border-bottom:none;font-weight:700;}
+  td button{background:none;border:none;padding:0;color:var(--accent);font-weight:600;cursor:pointer;}
+
+  /* notes */
+  .notes{list-style:none;margin:0;padding:0;font-size:13.5px;line-height:1.5;}
+  .notes li{padding:9px 0;border-bottom:1px solid var(--line);}
+  .notes li:last-child{border-bottom:none;padding-bottom:0;}
+  .notes li.key{color:#ffc9c9;}
+  .gloss{display:grid;grid-template-columns:70px 1fr;gap:8px 12px;font-size:13.5px;line-height:1.4;margin:0;}
+  .gloss dt{font-weight:700;font-family:'SF Mono',ui-monospace,Menlo,monospace;font-size:13px;}
+  .gloss dd{margin:0;color:#c8ced8;}
+
+  /* bottom tabs */
+  nav.tabs{
+    position:fixed;left:0;right:0;bottom:0;z-index:6;background:rgba(11,13,16,.96);
+    border-top:1px solid var(--line);display:flex;justify-content:center;
+    padding-bottom:env(safe-area-inset-bottom);
+  }
+  nav.tabs div{display:flex;width:100%;max-width:560px;}
+  nav.tabs button{
+    flex:1;background:none;border:none;padding:11px 4px 12px;cursor:pointer;
+    font-size:11.5px;font-weight:600;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:4px;
+  }
+  nav.tabs button.on{color:var(--accent);}
+  nav.tabs svg{width:22px;height:22px;}
+
+  /* filter sheet */
+  #sheet{display:none;position:fixed;inset:0;z-index:20;background:rgba(0,0,0,.6);align-items:flex-end;justify-content:center;}
+  #sheet.open{display:flex;}
+  .sheet-body{
+    background:var(--panel);border:1px solid var(--line);border-bottom:none;border-radius:18px 18px 0 0;
+    width:100%;max-width:560px;max-height:86vh;overflow-y:auto;padding:18px 16px calc(18px + env(safe-area-inset-bottom));
+  }
+  .sheet-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;}
+  .sheet-head h2{font-size:17px;margin:0;}
+  .sheet-head button{background:none;border:none;color:var(--accent);font-weight:600;font-size:14px;padding:6px;cursor:pointer;}
+  .fgroup{margin-top:14px;}
+  .fgroup h3{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:600;margin:0 0 8px;}
+  .fgroup .opts{display:flex;flex-wrap:wrap;gap:6px;}
+  .fgroup .chip{background:var(--bg);}
+  .fgroup .chip.on{background:var(--accent);}
+  .done{
+    width:100%;margin-top:20px;background:var(--accent);color:#06211e;border:none;border-radius:12px;
+    padding:14px;font-weight:700;font-size:15px;cursor:pointer;
+  }
+  footer{text-align:center;font-size:11px;color:#5d6573;margin-top:22px;line-height:1.6;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- ============ main screens ============ -->
+  <div id="main">
+    <header class="top">
+      <a class="back" href="../index.html" aria-label="Back to tools">‹</a>
+      <div>
+        <p class="eyebrow" id="projName">Door schedule</p>
+        <h1>Door Schedule</h1>
+        <p class="sub" id="docLine"></p>
+      </div>
+    </header>
+
+    <section id="tab-doors">
+      <div class="sticky">
+        <label class="search">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8b93a1" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="16.5" y1="16.5" x2="21" y2="21"/></svg>
+          <input id="q" type="search" inputmode="search" autocomplete="off" autocorrect="off" spellcheck="false"
+                 placeholder="Door ref, room, location, hinge…" aria-label="Search doors">
+          <button class="x" id="qClear" type="button" aria-label="Clear search">×</button>
+        </label>
+        <div class="chips" id="floorChips"></div>
+      </div>
+      <div class="count-row"><span id="count"></span><button id="reset" type="button" hidden>Clear filters</button></div>
+      <div id="list"></div>
+    </section>
+
+    <section id="tab-overview" hidden></section>
+    <section id="tab-notes" hidden></section>
+
+    <footer id="foot"></footer>
+  </div>
+
+  <!-- ============ single door ============ -->
+  <div id="detail"></div>
+</div>
+
+<nav class="tabs" id="tabs"><div>
+  <button data-tab="doors" class="on" type="button">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="3" width="12" height="18" rx="1"/><circle cx="14.5" cy="12.5" r=".8" fill="currentColor"/></svg>Doors
+  </button>
+  <button data-tab="overview" type="button">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="5" y1="20" x2="5" y2="11"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="19" y1="20" x2="19" y2="14"/></svg>Overview
+  </button>
+  <button data-tab="notes" type="button">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h9l4 4v14H6z"/><line x1="9" y1="12" x2="16" y2="12"/><line x1="9" y1="16" x2="16" y2="16"/></svg>Notes
+  </button>
+</div></nav>
+
+<div id="sheet" role="dialog" aria-modal="true" aria-label="Filters">
+  <div class="sheet-body">
+    <div class="sheet-head"><h2>Filters</h2><button id="sheetClear" type="button">Clear all</button></div>
+    <div id="sheetGroups"></div>
+    <button class="done" id="sheetDone" type="button">Show doors</button>
+  </div>
+</div>
+
+<script src="data.js"></script>
+<script>
+(function(){
+  'use strict';
+  var S = window.SCHEDULE || {meta:{}, notes:[], doors:[]};
+  var DOORS = S.doors;
+  var $ = function(id){ return document.getElementById(id); };
+  function esc(s){
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  }
+
+  /* ---------- tidy each door once ---------- */
+  var FLOOR_SHORT = {'Basement':'B','Lower Ground':'LG','Ground Floor':'G','First Floor':'1','Second Floor':'2',
+                     'Third Floor':'3','Fourth Floor':'4','Fifth Floor':'5','Roof':'Roof'};
+  var STATUS_LABEL = {active:'Live', abeyance:'In abeyance', omitted:'Omitted', demolished:'Demolished', sec01:'Section 01 pack'};
+  var FLOORS = [];
+  function blank(v){ return !v || /^(n\/a|omitted|-|x to be demolished)$/i.test(v); }
+
+  DOORS.forEach(function(d){
+    if (FLOORS.indexOf(d.floor) < 0) FLOORS.push(d.floor);
+    d.off = d.status === 'omitted' || d.status === 'demolished' || d.status === 'sec01';
+    var t = d.type || '';
+    d.kind = /riser/i.test(t) ? 'Riser' : /double door/i.test(t) ? 'Double' : blank(t) ? '' : 'Single';
+    d.external = /external/i.test(t);
+    d.glazed = /vision|glazed/i.test(t) || (!blank(d.vp));
+    var f = (d.fire || '').toUpperCase();
+    d.fireN = /^FD\d+S?$/.test(f) ? f : (d.off ? '' : 'None');
+    var m = /^(FOH|BOH)\b/.exec(d.loc || '');
+    d.area = m ? m[1] : '';
+    var ref = d.ref || '';
+    d.hay = [ref, ref.replace(/-/g,''), ref.replace(/-/g,' '), /^\d/.test(ref) ? 'D'+ref : '', d.loc, d.floor, t, d.fire,
+             d.desc, d.finish, d.access, d.hinges, d.closer, d.signage, d.vp, d.survey, d.surveySize,
+             STATUS_LABEL[d.status], d.onsite ? 'already on site' : '',
+             (d.comments || []).map(function(c){ return c.t; }).join(' ')].join(' ').toLowerCase();
+    d.refL = ref.toLowerCase();
+  });
+
+  /* ---------- pinned doors (kept on this phone only) ---------- */
+  var pins = {};
+  try { (JSON.parse(localStorage.getItem('doors.pins') || '[]')).forEach(function(k){ pins[k] = 1; }); } catch(e){}
+  function pinKey(d){ return d.ref || d.survey || ('row' + d.id); }
+  function savePins(){ try { localStorage.setItem('doors.pins', JSON.stringify(Object.keys(pins))); } catch(e){} }
+
+  /* ---------- filters ---------- */
+  var GROUPS = [
+    {key:'area',   title:'Area',            opts:[['FOH','Front of house'],['BOH','Back of house']]},
+    {key:'fire',   title:'Fire rating',     opts:[['FD30','FD30'],['FD30S','FD30S'],['FD60','FD60'],['FD60S','FD60S'],['None','Not fire rated']]},
+    {key:'kind',   title:'Door type',       opts:[['Single','Single'],['Double','Double'],['Riser','Riser door'],['External','External'],['Glazed','Glazed / vision panel']]},
+    {key:'cond',   title:'New or existing', opts:[['N','New'],['E','Existing']]},
+    {key:'status', title:'Status',          opts:[['live','Live only'],['abeyance','In abeyance'],['onsite','Already on site'],['off','Omitted / demolished']]},
+    {key:'pinned', title:'My doors',        opts:[['1','Pinned only']]}
+  ];
+  var state = {q:'', floor:'', area:'', fire:'', kind:'', cond:'', status:'', pinned:''};
+  var current = [];   // doors currently listed, in order
+
+  function matches(d){
+    if (state.floor && d.floor !== state.floor) return false;
+    if (state.area && d.area !== state.area) return false;
+    if (state.fire && d.fireN !== state.fire) return false;
+    if (state.cond && d.cond !== state.cond) return false;
+    if (state.kind){
+      if (state.kind === 'External'){ if (!d.external) return false; }
+      else if (state.kind === 'Glazed'){ if (!d.glazed) return false; }
+      else if (d.kind !== state.kind) return false;
+    }
+    if (state.status === 'live' && d.status !== 'active') return false;
+    if (state.status === 'abeyance' && d.status !== 'abeyance') return false;
+    if (state.status === 'onsite' && !d.onsite) return false;
+    if (state.status === 'off' && !d.off) return false;
+    if (state.pinned && !pins[pinKey(d)]) return false;
+    if (state.q){
+      var words = state.q.toLowerCase().split(/\s+/);
+      for (var i = 0; i < words.length; i++) if (words[i] && d.hay.indexOf(words[i]) < 0) return false;
+    }
+    return true;
+  }
+  function sheetCount(){
+    return GROUPS.reduce(function(n, g){ return n + (state[g.key] ? 1 : 0); }, 0);
+  }
+
+  /* ---------- small renderers ---------- */
+  function fireTag(d){
+    if (!d.fireN) return '';
+    if (d.fireN === 'None') return '<span class="tag">Not fire rated</span>';
+    return '<span class="tag ' + (d.fireN.indexOf('60') > 0 ? 'fd60' : 'fd30') + '">' + esc(d.fireN) + '</span>';
+  }
+  function statusTag(d){
+    var s = '';
+    if (d.status === 'abeyance') s += '<span class="tag warn">In abeyance</span>';
+    else if (d.status === 'sec01') s += '<span class="tag off">Section 01 pack</span>';
+    else if (d.off) s += '<span class="tag off">' + STATUS_LABEL[d.status] + '</span>';
+    if (d.onsite) s += '<span class="tag new">On site</span>';
+    return s;
+  }
+  function num(v){ var m = /^\d{2,4}\b/.exec(v || ''); return m ? m[0] : ''; }
+  function leafLine(d){
+    var w = num(d.leafW), h = num(d.leafH), t = num(d.leafD);
+    if (w && h) return w + ' × ' + h + (t ? ' × ' + t : '');
+    if (/existing/i.test(d.leafW || '')) return 'Existing leaf';
+    return '';
+  }
+  function card(d){
+    var leaf = d.off ? '' : leafLine(d);
+    return '<button type="button" class="door' + (d.off ? ' off' : '') + '" data-id="' + d.id + '">' +
+      '<div class="r1"><span class="ref">' + esc(d.ref || d.survey || '—') + '</span>' +
+        (pins[pinKey(d)] ? '<span class="pin-dot" aria-label="Pinned">★</span>' : '') +
+        '<span class="spacer"></span>' + statusTag(d) + (d.off ? '' : fireTag(d)) + '</div>' +
+      '<div class="loc">' + esc(d.loc || '') + '</div>' +
+      '<div class="r3">' +
+        (leaf ? '<span class="dim">' + esc(leaf) + '</span>' : '') +
+        (d.kind && !d.off ? '<span>' + d.kind + (d.external ? ' · external' : '') + '</span>' : '') +
+        (d.cond === 'E' && !d.off ? '<span>Existing</span>' : '') +
+        (d.surveySize && d.status === 'demolished' ? '<span>Survey size ' + esc(d.surveySize) + '</span>' : '') +
+      '</div></button>';
+  }
+
+  /* ---------- door list ---------- */
+  function renderChips(){
+    var h = '<button type="button" class="chip filter' + (sheetCount() ? ' has' : '') + '" id="openSheet">' +
+      '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="7" y1="12" x2="17" y2="12"/><line x1="10" y1="17" x2="14" y2="17"/></svg>' +
+      'Filters' + (sheetCount() ? ' · ' + sheetCount() : '') + '</button>' +
+      '<button type="button" class="chip' + (state.floor ? '' : ' on') + '" data-floor="">All floors</button>';
+    FLOORS.forEach(function(f){
+      h += '<button type="button" class="chip' + (state.floor === f ? ' on' : '') + '" data-floor="' + esc(f) + '">' + esc(FLOOR_SHORT[f] || f) + '</button>';
+    });
+    $('floorChips').innerHTML = h;
+  }
+  function renderList(){
+    current = DOORS.filter(matches);
+    if (state.q){
+      var q = state.q.toLowerCase().trim();
+      var rank = function(d){ return d.refL === q ? 0 : d.refL.indexOf(q) === 0 ? 1 : d.refL.indexOf(q) > 0 ? 2 : 3; };
+      current = current.map(function(d, i){ return [rank(d), i, d]; })
+        .sort(function(a, b){ return a[0] - b[0] || a[1] - b[1]; }).map(function(x){ return x[2]; });
+    }
+    var h = '', last = null, grouped = !state.q;
+    current.forEach(function(d){
+      if (grouped && d.floor !== last){ h += '<div class="floor-head">' + esc(d.floor) + '</div>'; last = d.floor; }
+      h += card(d);
+    });
+    if (!current.length){
+      h = '<div class="empty">No doors match.<br>Try a shorter search, or clear the filters.</div>';
+    }
+    $('list').innerHTML = h;
+    var live = current.filter(function(d){ return d.status === 'active'; }).length;
+    $('count').textContent = current.length + ' door' + (current.length === 1 ? '' : 's') +
+      (live !== current.length ? ' · ' + live + ' live' : '');
+    $('reset').hidden = !(state.q || state.floor || sheetCount());
+    $('qClear').style.display = state.q ? 'block' : 'none';
+    renderChips();
+  }
+  function setFilters(f){
+    Object.keys(state).forEach(function(k){ state[k] = ''; });
+    Object.keys(f || {}).forEach(function(k){ state[k] = f[k]; });
+    $('q').value = state.q;
+    renderList();
+  }
+
+  /* ---------- filter sheet ---------- */
+  function renderSheet(){
+    $('sheetGroups').innerHTML = GROUPS.map(function(g){
+      return '<div class="fgroup"><h3>' + g.title + '</h3><div class="opts">' + g.opts.map(function(o){
+        return '<button type="button" class="chip' + (state[g.key] === o[0] ? ' on' : '') + '" data-g="' + g.key + '" data-v="' + o[0] + '">' + o[1] + '</button>';
+      }).join('') + '</div></div>';
+    }).join('');
+    var n = DOORS.filter(matches).length;
+    $('sheetDone').textContent = 'Show ' + n + ' door' + (n === 1 ? '' : 's');
+  }
+
+  /* ---------- single door ---------- */
+  function val(v, cls){
+    if (blank(v)) return '<dd class="na">' + (v ? esc(v) : '—') + '</dd>';
+    return '<dd' + (cls ? ' class="' + cls + '"' : '') + '>' + esc(v) + '</dd>';
+  }
+  function sizeRow(label, v, tbc){
+    if (!v) return '';
+    var m = /^(\d{2,4})\s*(.*)$/.exec(v);
+    var noteOnly = !m;
+    return '<div class="row"><span>' + label + '</span><b class="' + (noteOnly ? 'txt ' : '') + (tbc ? 'tbc' : '') + '">' +
+      esc(noteOnly ? v : m[1]) + '</b></div>' +
+      (m && m[2] ? '<div class="note">' + esc(m[2].replace(/^\(|\)$/g, '')) + '</div>' : '');
+  }
+  function isTbc(d, k){ return (d.tbc || []).indexOf(k) >= 0; }
+  function archText(d){
+    if (d.arch){
+      return /^\d+$/.test(d.arch) ? d.arch + ' mm' : d.arch;
+    }
+    if (d.kind === 'Riser') return '';
+    return '100 mm (schedule default — nothing else noted)';
+  }
+  function showDoor(id){
+    var d = DOORS[id];
+    if (!d){ closeDoor(); return; }
+    var pos = current.indexOf(d);
+    var prev = pos > 0 ? current[pos - 1] : null, next = pos >= 0 && pos < current.length - 1 ? current[pos + 1] : null;
+    var pinned = !!pins[pinKey(d)];
+    var h = '<div class="d-head"><div class="d-top">' +
+      '<button type="button" class="icon-btn" id="dBack" aria-label="Back to list">‹</button>' +
+      '<span class="floor">' + esc(d.floor) + (d.area ? ' · ' + d.area : '') + '</span>' +
+      '<button type="button" class="icon-btn" id="dPrev" aria-label="Previous door"' + (prev ? ' data-id="' + prev.id + '"' : ' disabled') + '>↑</button>' +
+      '<button type="button" class="icon-btn" id="dNext" aria-label="Next door"' + (next ? ' data-id="' + next.id + '"' : ' disabled') + '>↓</button>' +
+      '<button type="button" class="icon-btn' + (pinned ? ' on' : '') + '" id="dPin" aria-label="Pin this door" aria-pressed="' + pinned + '">' + (pinned ? '★' : '☆') + '</button>' +
+      '</div>' +
+      '<p class="d-ref">' + esc(d.ref || d.survey || '—') + '</p>' +
+      '<p class="d-loc">' + esc(d.loc || '') + '</p>' +
+      '<div class="d-tags">' + statusTag(d) + (d.off ? '' : fireTag(d)) +
+        (d.cond === 'N' ? '<span class="tag new">New</span>' : d.cond === 'E' ? '<span class="tag">Existing</span>' : '') +
+        (!blank(d.type) ? '<span class="tag">' + esc(d.type) + '</span>' : '') +
+      '</div></div>';
+
+    if (d.status === 'demolished') h += '<div class="banner off"><b>To be demolished</b>This door is not being installed.</div>';
+    else if (d.status === 'omitted') h += '<div class="banner off"><b>Omitted from the schedule</b>Do not order or install. See comments below for the reason, if given.</div>';
+    else if (d.status === 'sec01') h += '<div class="banner off"><b>Picked up in the Section 01 pack</b>Struck through in this schedule — refer to the Section 01 information for this doorset.</div>';
+    else if (d.status === 'abeyance') h += '<div class="banner warn"><b>In abeyance</b>On hold — do not order or install until confirmed. Check the comments below.</div>';
+    if (d.onsite) h += '<div class="banner info"><b>Doorset already on site</b>See comments for where it is being reused from.</div>';
+
+    var hasSizes = !d.off && (d.soW || d.soH || d.leafW || d.leafH);
+    if (hasSizes){
+      var anyTbc = (d.tbc || []).length > 0;
+      h += '<div class="card"><h2>Sizes (mm)</h2><div class="sizes">' +
+        '<div class="size"><div class="lbl">Structural opening</div>' +
+          sizeRow('Width', d.soW, isTbc(d,'soW')) + sizeRow('Height', d.soH, isTbc(d,'soH')) + '</div>' +
+        '<div class="size"><div class="lbl">Door leaf' + (d.kind === 'Double' || /double/i.test(d.type || '') ? ' (each)' : '') + '</div>' +
+          sizeRow('Width', d.leafW, isTbc(d,'leafW')) + sizeRow('Height', d.leafH, isTbc(d,'leafH')) +
+          sizeRow('Thick', d.leafD, isTbc(d,'leafD')) + '</div>' +
+        '</div>' +
+        (anyTbc ? '<p class="fine"><i>Red sizes</i> are to be confirmed on site before ordering.</p>' : '') +
+        (d.surveySize ? '<p class="fine">Existing door as surveyed: ' + esc(d.surveySize) + '</p>' : '') +
+        '</div>';
+    }
+
+    if (d.comments && d.comments.length){
+      h += '<div class="card"><h2>Comments</h2><ul class="comments">' + d.comments.map(function(c){
+        return '<li class="' + (c.red ? 'red' : c.bold ? 'bold' : '') + '">' + esc(c.t) + '</li>';
+      }).join('') + '</ul></div>';
+    }
+
+    if (!d.off && d.status !== 'demolished'){
+      var red = d.redFields || [];
+      h += '<div class="card"><h2>Ironmongery</h2><dl class="kv">' +
+        '<dt>Hinges</dt>' + val(d.hinges) +
+        '<dt>Self-closer</dt>' + val(d.closer) +
+        '<dt>Lock / access</dt>' + val(d.access, red.indexOf('access') >= 0 ? 'red' : '') +
+        '</dl></div>';
+
+      h += '<div class="card"><h2>Leaf, frame &amp; finish</h2><dl class="kv">' +
+        '<dt>Door type</dt>' + val(d.type) +
+        '<dt>Construction</dt>' + val(d.desc) +
+        '<dt>Finish</dt>' + val(d.finish) +
+        '<dt>Architrave</dt>' + val(archText(d), red.indexOf('arch') >= 0 ? 'red' : '') +
+        '</dl></div>';
+
+      h += '<div class="card"><h2>Fire, acoustic &amp; signage</h2><dl class="kv">' +
+        '<dt>Fire rating</dt>' + val(d.fire) +
+        '<dt>Acoustic</dt>' + val(/^\d+$/.test(d.acoustic || '') ? d.acoustic + ' dB' : d.acoustic) +
+        '<dt>Vision panel</dt>' + val(d.vp === 'VP' ? 'Yes' : d.vp, red.indexOf('vp') >= 0 ? 'red' : '') +
+        '<dt>Signage</dt>' + val(d.signage, red.indexOf('signage') >= 0 ? 'red' : '') +
+        '</dl></div>';
+    }
+
+    h += '<div class="card"><h2>Reference</h2><dl class="kv">' +
+      '<dt>Floor</dt>' + val(d.floor) +
+      '<dt>Fire survey no.</dt>' + val(d.survey) +
+      '<dt>Surveyed size</dt>' + val(d.surveySize) +
+      '<dt>Row revision</dt>' + val(d.rev) +
+      '<dt>Schedule page</dt>' + val(String(d.page)) +
+      '</dl></div>' +
+      '<footer>Handing / swing is not in the schedule — check the GA drawings.<br>' + esc(sourceLine()) + '</footer>';
+
+    $('detail').innerHTML = h;
+    $('main').style.display = 'none';
+    $('tabs').style.display = 'none';
+    $('detail').style.display = 'block';
+    window.scrollTo(0, 0);
+  }
+  function closeDoor(){
+    $('detail').style.display = 'none';
+    $('main').style.display = '';
+    $('tabs').style.display = '';
+  }
+
+  /* ---------- overview ---------- */
+  function tally(list, fn){
+    var o = {};
+    list.forEach(function(d){ var k = fn(d); if (k) o[k] = (o[k] || 0) + 1; });
+    return o;
+  }
+  function bars(title, counts, order, filterKey, labels){
+    var max = Math.max.apply(null, order.map(function(k){ return counts[k] || 0; }).concat([1]));
+    return '<div class="card"><h2>' + title + '</h2><div class="bars">' + order.filter(function(k){ return counts[k]; }).map(function(k){
+      return '<button type="button" class="bar" data-f=\'' + esc(JSON.stringify(filterKey(k))) + '\'>' +
+        '<span>' + esc((labels && labels[k]) || k) + '</span>' +
+        '<span class="track"><span class="fill" style="width:' + Math.round(100 * counts[k] / max) + '%"></span></span>' +
+        '<span class="n">' + counts[k] + '</span></button>';
+    }).join('') + '</div></div>';
+  }
+  function renderOverview(){
+    var live = DOORS.filter(function(d){ return d.status === 'active'; });
+    var abey = DOORS.filter(function(d){ return d.status === 'abeyance'; });
+    var off = DOORS.filter(function(d){ return d.off; });
+    var inPlay = live.concat(abey);
+    function tile(n, label, f){
+      return '<button type="button" class="tile" data-f=\'' + esc(JSON.stringify(f)) + '\'><b>' + n + '</b><span>' + label + '</span></button>';
+    }
+    var h = '<div class="tiles">' +
+      tile(live.length, 'Live doors', {status:'live'}) +
+      tile(abey.length, 'In abeyance', {status:'abeyance'}) +
+      tile(off.length, 'Omitted / demolished', {status:'off'}) +
+      tile(live.filter(function(d){ return d.cond === 'N'; }).length, 'New (live)', {status:'live', cond:'N'}) +
+      tile(live.filter(function(d){ return d.cond === 'E'; }).length, 'Existing kept', {status:'live', cond:'E'}) +
+      tile(DOORS.filter(function(d){ return d.onsite; }).length, 'Already on site', {status:'onsite'}) +
+      '</div>';
+
+    h += '<div class="card"><h2>By floor</h2><div class="tbl-wrap"><table><thead><tr><th>Floor</th><th>Live</th><th>FD30</th><th>FD60</th><th>Risers</th><th>Abey.</th></tr></thead><tbody>';
+    var tot = [0,0,0,0,0];
+    FLOORS.forEach(function(f){
+      var fl = live.filter(function(d){ return d.floor === f; });
+      var row = [fl.length,
+        fl.filter(function(d){ return /^FD30/.test(d.fireN); }).length,
+        fl.filter(function(d){ return /^FD60/.test(d.fireN); }).length,
+        fl.filter(function(d){ return d.kind === 'Riser'; }).length,
+        abey.filter(function(d){ return d.floor === f; }).length];
+      row.forEach(function(n, i){ tot[i] += n; });
+      h += '<tr><td><button type="button" data-f=\'' + esc(JSON.stringify({floor:f})) + '\'>' + esc(f) + '</button></td><td>' + row.join('</td><td>') + '</td></tr>';
+    });
+    h += '<tr><td>Total</td><td>' + tot.join('</td><td>') + '</td></tr></tbody></table></div>' +
+      '<p class="fine">FD30 and FD60 columns include the smoke-sealed “S” versions. Live = not omitted, demolished or in abeyance.</p></div>';
+
+    h += bars('Fire rating — live doors', tally(live, function(d){ return d.fireN; }), ['FD30','FD30S','FD60','FD60S','None'],
+              function(k){ return {status:'live', fire:k}; }, {None:'Not rated'});
+    h += bars('Door type — live doors', tally(live, function(d){ return d.kind; }), ['Single','Double','Riser'],
+              function(k){ return {status:'live', kind:k}; }, {Riser:'Riser doors'});
+    h += bars('Area — live doors', tally(live, function(d){ return d.area; }), ['FOH','BOH'],
+              function(k){ return {status:'live', area:k}; }, {FOH:'Front of house', BOH:'Back of house'});
+
+    var tbc = inPlay.filter(function(d){ return /\btbc\b|await|to be confirmed/i.test(d.hay); });
+    h += '<div class="card"><h2>Open items</h2><div class="bars">' +
+      '<button type="button" class="bar" data-f=\'' + esc(JSON.stringify({q:'tbc'})) + '\'><span>Mention “TBC”</span><span class="track"><span class="fill" style="width:100%;background:var(--warn)"></span></span><span class="n">' +
+        DOORS.filter(function(d){ return !d.off && d.hay.indexOf('tbc') >= 0; }).length + '</span></button>' +
+      '<button type="button" class="bar" data-f=\'' + esc(JSON.stringify({status:'abeyance'})) + '\'><span>In abeyance</span><span class="track"><span class="fill" style="width:' + Math.round(100 * abey.length / Math.max(tbc.length, abey.length, 1)) + '%;background:var(--warn)"></span></span><span class="n">' + abey.length + '</span></button>' +
+      '</div><p class="fine">Tap any figure on this page to see the doors behind it.</p></div>';
+    $('tab-overview').innerHTML = h;
+  }
+
+  /* ---------- notes ---------- */
+  function renderNotes(){
+    var general = S.notes.filter(function(n){ return n.t.indexOf(' = ') < 0; });
+    $('tab-notes').innerHTML =
+      '<div class="card"><h2>Abbreviations</h2><dl class="gloss">' +
+        '<dt>FD30S</dt><dd>30-minute fire door with intumescent smoke seal</dd>' +
+        '<dt>FD60S</dt><dd>60-minute fire door with intumescent smoke seal</dd>' +
+        '<dt>FDKS</dt><dd>“Fire Door Keep Shut” sign</dd>' +
+        '<dt>FDKL</dt><dd>“Fire Door Keep Locked” sign</dd>' +
+        '<dt>S/O</dt><dd>Structural opening</dd>' +
+        '<dt>VP</dt><dd>Vision panel</dd>' +
+        '<dt>FOH</dt><dd>Front of house</dd>' +
+        '<dt>BOH</dt><dd>Back of house</dd>' +
+        '<dt>TBC</dt><dd>To be confirmed — awaiting client or site confirmation</dd>' +
+      '</dl></div>' +
+      '<div class="card"><h2>General notes from the schedule</h2><ul class="notes">' + general.map(function(n){
+        return '<li' + (n.key ? ' class="key"' : '') + '>' + esc(n.t) + '</li>';
+      }).join('') + '</ul></div>';
+  }
+
+  /* ---------- wiring ---------- */
+  function sourceLine(){
+    var m = S.meta;
+    return 'Source: ' + (m.docRef || 'door schedule') + ' · Rev ' + (m.rev || '?') + ' · ' + (m.status || '') + ' · ' + (m.date || '');
+  }
+  function showTab(name){
+    ['doors','overview','notes'].forEach(function(t){ $('tab-' + t).hidden = t !== name; });
+    Array.prototype.forEach.call($('tabs').querySelectorAll('button'), function(b){
+      b.classList.toggle('on', b.getAttribute('data-tab') === name);
+    });
+    window.scrollTo(0, 0);
+  }
+  var listScroll = 0;
+  function route(){
+    var m = /^#door\/(\d+)$/.exec(location.hash);
+    if (m) showDoor(+m[1]);
+    else { closeDoor(); renderList(); window.scrollTo(0, listScroll); }
+  }
+  function openDoor(id, replace){
+    if (replace) location.replace('#door/' + id);
+    else { listScroll = window.scrollY; location.hash = 'door/' + id; }
+  }
+
+  var timer;
+  $('q').addEventListener('input', function(){
+    clearTimeout(timer);
+    var v = this.value;
+    timer = setTimeout(function(){ state.q = v.trim(); renderList(); }, 90);
+  });
+  $('qClear').addEventListener('click', function(){ state.q = ''; $('q').value = ''; renderList(); $('q').focus(); });
+  $('reset').addEventListener('click', function(){ setFilters({}); });
+  $('floorChips').addEventListener('click', function(e){
+    var b = e.target.closest('button'); if (!b) return;
+    if (b.id === 'openSheet'){ renderSheet(); $('sheet').classList.add('open'); return; }
+    state.floor = b.getAttribute('data-floor'); renderList(); window.scrollTo(0, 0);
+  });
+  $('list').addEventListener('click', function(e){
+    var b = e.target.closest('.door'); if (b) openDoor(+b.getAttribute('data-id'));
+  });
+  $('detail').addEventListener('click', function(e){
+    var b = e.target.closest('button'); if (!b) return;
+    if (b.id === 'dBack'){ if (history.length > 1) history.back(); else location.hash = ''; }
+    else if (b.id === 'dPin'){
+      var d = DOORS[+(/(\d+)$/.exec(location.hash) || [])[1]]; if (!d) return;
+      var k = pinKey(d);
+      if (pins[k]) delete pins[k]; else pins[k] = 1;
+      savePins(); showDoor(d.id);
+    }
+    else if (b.hasAttribute('data-id')) openDoor(+b.getAttribute('data-id'), true);
+  });
+  $('sheetGroups').addEventListener('click', function(e){
+    var b = e.target.closest('button'); if (!b) return;
+    var g = b.getAttribute('data-g'), v = b.getAttribute('data-v');
+    state[g] = state[g] === v ? '' : v;
+    renderSheet();
+  });
+  $('sheetClear').addEventListener('click', function(){
+    GROUPS.forEach(function(g){ state[g.key] = ''; }); renderSheet();
+  });
+  function closeSheet(){ $('sheet').classList.remove('open'); renderList(); window.scrollTo(0, 0); }
+  $('sheetDone').addEventListener('click', closeSheet);
+  $('sheet').addEventListener('click', function(e){ if (e.target === this) closeSheet(); });
+  $('tabs').addEventListener('click', function(e){
+    var b = e.target.closest('button'); if (b) showTab(b.getAttribute('data-tab'));
+  });
+  $('tab-overview').addEventListener('click', function(e){
+    var b = e.target.closest('[data-f]'); if (!b) return;
+    setFilters(JSON.parse(b.getAttribute('data-f')));
+    showTab('doors');
+  });
+  window.addEventListener('hashchange', route);
+
+  $('projName').textContent = (S.meta.project || 'Door schedule').replace(/^\d+\s*-\s*/, '');
+  $('docLine').textContent = DOORS.length + ' doors · Rev ' + (S.meta.rev || '?') + ' (' + (S.meta.status || 'status unknown') + ') · ' + (S.meta.date || '');
+  $('foot').innerHTML = esc(sourceLine()) + '<br>Always check against the latest issued schedule before ordering or fitting.';
+  renderOverview();
+  renderNotes();
+  route();
+
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function(){ navigator.serviceWorker.register('../sw.js').catch(function(){}); });
+  }
+})();
+</script>
+</body>
+</html>
