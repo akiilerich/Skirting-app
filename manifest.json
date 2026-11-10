@@ -1,7 +1,7 @@
 {
   "name": "Carpentry App",
   "short_name": "Carpentry",
-  "description": "A home for site tools: architrave cut calculator, skirting cutting list, and more to come.",
+  "description": "A home for site tools: architrave cut calculator, skirting cutting list, door schedule lookup, and more to come.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
