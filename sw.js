@@ -1,4 +1,4 @@
-const CACHE_NAME = 'carpentry-app-v3';
+const CACHE_NAME = 'carpentry-app-v4';
 const CORE_ASSETS = [
   './',
   './index.html',
@@ -9,13 +9,22 @@ const CORE_ASSETS = [
   './skirting/index.html',
   './doors/index.html',
   './doors/data.js',
-  './doors/plan-data.js',
-  './doors/plans/first-floor.svg'
+  './doors/plan-data.js'
 ];
+
+// The plan drawings are large (about 4 MB each before compression), so they are fetched
+// in the background after install and one failing never blocks the app from installing.
+const PLAN_ASSETS = [
+  'first-floor', 'second-floor', 'third-floor', 'fourth-floor', 'fifth-floor', 'ground-floor', 'lower-ground'
+].map((n) => './doors/plans/' + n + '.svg');
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(CORE_ASSETS))
+    caches.open(CACHE_NAME).then((cache) =>
+      cache.addAll(CORE_ASSETS).then(() => {
+        PLAN_ASSETS.reduce((chain, url) => chain.then(() => cache.add(url).catch(() => {})), Promise.resolve());
+      })
+    )
   );
   self.skipWaiting();
 });
