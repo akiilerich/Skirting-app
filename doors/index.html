@@ -506,7 +506,9 @@
               '%;top:' + (100 * (0.5 - (pd.y - fl.y) / span)).toFixed(2) + '%';
     var sw = d.off ? '' : swingText(pd.sw, d);
     return '<div class="card"><h2>On the plan</h2>' +
-      (sw ? '<p class="swing">' + esc(sw) + '<small>Read off the plan drawing and checked against the scheduled leaf width. Confirm on site.</small></p>' : '') +
+      (sw ? '<p class="swing">' + esc(sw) + '<small>' + (pd.sw && pd.sw.chk === 0
+        ? 'Read off the plan drawing. The schedule gives no leaf width for this door, so it could not be cross-checked — look at the plan below. Confirm on site.'
+        : 'Read off the plan drawing and checked against the scheduled leaf width. Confirm on site.') + '</small></p>' : '') +
       '<div class="plan' + (planWide ? ' wide' : '') + '" id="dPlan" role="button" aria-label="Plan around this door. Tap to zoom ' + (planWide ? 'in' : 'out') + '">' +
         '<img src="' + esc(fl.src) + '" alt="Plan drawing around door ' + esc(d.ref) + '" style="' + css + '"><span class="ring"></span></div>' +
       '<p class="fine">Tap the plan to zoom ' + (planWide ? 'in' : 'out') + '. Drawing ' + esc(fl.drawing) + ' rev ' + esc(fl.rev) +
