@@ -1,4 +1,4 @@
-const CACHE_NAME = 'carpentry-app-v4';
+const CACHE_NAME = 'carpentry-app-v5';
 const CORE_ASSETS = [
   './',
   './index.html',
@@ -7,6 +7,7 @@ const CORE_ASSETS = [
   './icon-512.png',
   './architrave/index.html',
   './skirting/index.html',
+  './overlay-door/index.html',
   './doors/index.html',
   './doors/data.js',
   './doors/plan-data.js'

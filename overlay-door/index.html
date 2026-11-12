@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Overlay Door</title>
+<meta name="theme-color" content="#EDF0EC">
+<link rel="icon" href="../icon-192.png">
+<link rel="apple-touch-icon" href="../icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#EDF0EC; --surface:#FFFFFF; --ink:#1E2A2E; --muted:#66757A; --rule:#C9D1CE;
+  --dim:#2F6B7E; --mdf:#D9C39E; --mdfline:#A88B5E; --backfill:#F8F6F1; --mould:#C7AE84;
+  --err:#B3412E; --errbg:#F6E3DE; --focus:#2F6B7E;
+  color-scheme: light;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#141A1C; --surface:#1C2427; --ink:#E2E7E4; --muted:#93A2A5; --rule:#33403F;
+    --dim:#82B8C8; --mdf:#6B5838; --mdfline:#A88B5E; --backfill:#212A2D; --mould:#8A7350;
+    --err:#E58B78; --errbg:#3A2420; --focus:#82B8C8;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#141A1C; --surface:#1C2427; --ink:#E2E7E4; --muted:#93A2A5; --rule:#33403F;
+  --dim:#82B8C8; --mdf:#6B5838; --mdfline:#A88B5E; --backfill:#212A2D; --mould:#8A7350;
+  --err:#E58B78; --errbg:#3A2420; --focus:#82B8C8;
+  color-scheme: dark;
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*::before,*::after{box-sizing:inherit}
+body{margin:0;background:var(--paper);color:var(--ink);font:400 15px/1.5 Barlow,system-ui,-apple-system,"Segoe UI",sans-serif}
+header{padding:20px 18px 8px;max-width:1200px;margin:0 auto}
+h1{font:600 30px/1.1 "Barlow Condensed","Arial Narrow",sans-serif;margin:0 0 6px;letter-spacing:.01em}
+header p{margin:0;color:var(--muted);max-width:60ch}
+.home{display:inline-block;margin:0 0 10px;padding:6px 0;color:var(--dim);font:500 15px Barlow,system-ui,sans-serif;text-decoration:none}
+.layout{max-width:1200px;margin:0 auto;padding:12px 18px 40px;display:grid;gap:22px}
+@media (min-width:900px){.layout{grid-template-columns:330px 1fr;align-items:start}.inputs{position:sticky;top:12px;max-height:calc(100vh - 24px);overflow:auto}}
+.inputs{display:grid;gap:14px}
+fieldset{border:1px solid var(--rule);background:var(--surface);border-radius:6px;padding:12px 14px 14px;margin:0}
+legend{font:600 17px "Barlow Condensed","Arial Narrow",sans-serif;padding:0 6px;margin-left:-6px}
+.row{display:grid;grid-template-columns:1fr 110px;align-items:center;gap:10px;margin-top:8px}
+.row label{font-size:14px}
+input[type=number],select{width:100%;font:500 16px Barlow,system-ui,sans-serif;color:var(--ink);background:var(--paper);border:1px solid var(--rule);border-radius:4px;padding:7px 8px;text-align:right}
+select{text-align:left}
+input[readonly]{color:var(--dim);border-style:dashed}
+input:focus-visible,select:focus-visible,button:focus-visible{outline:2px solid var(--focus);outline-offset:1px}
+.prow{display:grid;grid-template-columns:1fr 100px 62px;align-items:center;gap:8px;margin-top:8px}
+.prow .auto{font-size:13px;color:var(--muted);display:flex;gap:4px;align-items:center}
+.hint{font-size:13px;color:var(--muted);margin:8px 0 0}
+.chk{display:flex;align-items:center;gap:8px;margin-top:8px;font-size:14px}
+.out{display:grid;gap:22px;min-width:0}
+figure{margin:0;background:var(--surface);border:1px solid var(--rule);border-radius:6px;padding:14px}
+figcaption{font:600 18px "Barlow Condensed","Arial Narrow",sans-serif;margin-bottom:8px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:baseline}
+figcaption span{font:400 13px Barlow,sans-serif;color:var(--muted)}
+.svgwrap{overflow-x:auto}
+svg{display:block;width:100%;height:auto}
+#elev{max-height:80vh}
+.back{fill:var(--backfill);stroke:var(--ink)}
+.over{fill:var(--mdf);stroke:var(--ink)}
+.mould{fill:var(--mould);stroke:var(--ink);fill-rule:evenodd}
+.mline{fill:none;stroke:var(--mdfline)}
+.obj,.back,.over,.mould{stroke-width:1.4px}
+.mline,.mitre{stroke-width:.8px}
+.mitre{stroke:var(--ink)}
+.knob{fill:var(--surface);stroke:var(--ink);stroke-width:1.4px}
+.dl{stroke:var(--dim);stroke-width:1px;fill:none}
+.ext{stroke:var(--dim);stroke-width:.7px;fill:none}
+.dt{fill:var(--dim);font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-weight:500}
+.pl{fill:var(--muted);font-family:"Barlow Condensed","Arial Narrow",sans-serif}
+.hatchline{stroke:var(--mdfline);stroke-width:.6px}
+.brk{fill:none;stroke:var(--ink);stroke-width:1.2px}
+.trim{fill:none;stroke:var(--err);stroke-width:1px;stroke-dasharray:6 4}
+.tt{fill:var(--err);font-family:"Barlow Condensed","Arial Narrow",sans-serif}
+.stats{display:flex;flex-wrap:wrap;gap:8px 22px;font-size:14px;margin-top:10px}
+.stats b{font:600 18px "Barlow Condensed",sans-serif}
+table{width:100%;border-collapse:collapse;font-size:14px;font-variant-numeric:tabular-nums}
+th,td{padding:7px 6px;border-bottom:1px solid var(--rule);text-align:right;white-space:nowrap}
+th{font:600 14px "Barlow Condensed",sans-serif;color:var(--muted)}
+th:first-child,td:first-child{text-align:left;white-space:normal}
+tr.group td{font:600 15px "Barlow Condensed",sans-serif;text-align:left;padding-top:12px;color:var(--ink)}
+.tablewrap{overflow-x:auto}
+.err{background:var(--errbg);color:var(--err);border-radius:4px;padding:10px 12px;font-weight:500;display:none}
+.err.on{display:block}
+.btns{display:flex;gap:8px;flex-wrap:wrap}
+button{font:500 14px Barlow,sans-serif;color:var(--ink);background:var(--paper);border:1px solid var(--rule);border-radius:4px;padding:7px 12px;cursor:pointer}
+.note{font-size:13px;color:var(--muted);margin:10px 0 0}
+@media print{
+  .inputs,.btns,header p{display:none}
+  body{background:#fff}
+  .layout{display:block}
+  figure{break-inside:avoid;border:none;margin-bottom:16px}
+  #elev{max-height:none}
+}
+</style>
+</head>
+<body>
+<header>
+  <a class="home" href="../index.html">‹ All tools</a>
+  <h1>Overlay shaker door</h1>
+  <p>Backboard with stiles and rails glued on top, moulding in the panel recesses. Change any size and the drawing and cutting list update. All sizes in mm.</p>
+</header>
+
+<div class="layout">
+  <form class="inputs" id="form" onsubmit="return false">
+    <fieldset>
+      <legend>Door</legend>
+      <div class="row"><label for="H">Height</label><input type="number" id="H" inputmode="decimal"></div>
+      <div class="row"><label for="W">Width</label><input type="number" id="W" inputmode="decimal"></div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Boards</legend>
+      <div class="row"><label for="back">Backboard thickness</label><input type="number" id="back" inputmode="decimal"></div>
+      <div class="row"><label for="over">Stile and rail thickness</label><input type="number" id="over" inputmode="decimal"></div>
+      <div class="row"><label for="build">Which runs through</label>
+        <select id="build"><option value="stiles">Stiles full height</option><option value="rails">Rails full width</option></select></div>
+      <div class="row"><label for="trim">Trim allowance per edge</label><input type="number" id="trim" inputmode="decimal"></div>
+      <p class="hint">Backboard and outer stiles and rails are cut oversize by this much on each outside edge, then the glued door is trimmed back to finished size so the edge shows no seam. Set 0 for none.</p>
+    </fieldset>
+
+    <fieldset>
+      <legend>Stiles and rails</legend>
+      <div class="row"><label for="stile">Stile width</label><input type="number" id="stile" inputmode="decimal"></div>
+      <div class="row"><label for="top">Top rail</label><input type="number" id="top" inputmode="decimal"></div>
+      <div class="row"><label for="mid">Middle rails</label><input type="number" id="mid" inputmode="decimal"></div>
+      <div class="row"><label for="bottom">Bottom rail</label><input type="number" id="bottom" inputmode="decimal"></div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Panels</legend>
+      <div class="row"><label for="n">Number of panels</label>
+        <select id="n"><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select></div>
+      <div id="prows"></div>
+      <p class="hint">Heights are the open recess between rails. The panel set to Auto takes whatever height is left.</p>
+    </fieldset>
+
+    <fieldset>
+      <legend>Moulding</legend>
+      <div class="row"><label for="mw">Width (0 for none)</label><input type="number" id="mw" inputmode="decimal"></div>
+      <div class="row"><label for="md">Depth</label><input type="number" id="md" inputmode="decimal"></div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Knob</legend>
+      <label class="chk"><input type="checkbox" id="knob"> Show knob</label>
+      <div class="row"><label for="knobH">Centre from bottom</label><input type="number" id="knobH" inputmode="decimal"></div>
+      <div class="row"><label for="knobSide">Side</label>
+        <select id="knobSide"><option value="right">Right stile</option><option value="left">Left stile</option></select></div>
+    </fieldset>
+
+    <div class="btns">
+      <button type="button" id="reset">Reset to starting sizes</button>
+    </div>
+  </form>
+
+  <div class="out">
+    <div class="err" id="err" role="alert"></div>
+
+    <figure>
+      <figcaption>Front elevation <span id="scaleNote"></span></figcaption>
+      <div class="svgwrap"><svg id="elev" xmlns="http://www.w3.org/2000/svg"></svg></div>
+      <div class="stats" id="stats"></div>
+    </figure>
+
+    <figure>
+      <figcaption>Edge section <span>Through a panel, looking down. Not to the same scale as the elevation.</span></figcaption>
+      <div class="svgwrap"><svg id="sect" xmlns="http://www.w3.org/2000/svg"></svg></div>
+    </figure>
+
+    <figure>
+      <figcaption>Cutting list <span>Cut sizes, trim allowance included</span></figcaption>
+      <div class="tablewrap">
+        <table>
+          <thead><tr><th>Part</th><th>Qty</th><th>Length</th><th>Width</th><th>Thk</th></tr></thead>
+          <tbody id="cut"></tbody>
+        </table>
+      </div>
+      <p class="note" id="mnote"></p>
+    </figure>
+  </div>
+</div>
+
+<script>
+const KEY = 'overlay-door-v1';
+const DEF = {H:2100,W:500,back:18,over:12,trim:5,build:'stiles',stile:70,top:75,mid:75,bottom:150,n:3,ph:[330,900,500,400,400],auto:1,mw:20,md:12,knob:true,knobH:1000,knobSide:'right'};
+let S;
+try { S = Object.assign({}, DEF, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch(e){ S = Object.assign({}, DEF); }
+S.ph = (S.ph && S.ph.length >= 5) ? S.ph.slice() : DEF.ph.slice();
+
+const $ = id => document.getElementById(id);
+const NUMS = ['H','W','back','over','trim','stile','top','mid','bottom','mw','md','knobH'];
+const f = v => { const r = Math.round(v*10)/10; return String(r); };
+
+function fillForm(){
+  NUMS.forEach(k => $(k).value = S[k]);
+  $('build').value = S.build; $('n').value = S.n; $('knob').checked = S.knob; $('knobSide').value = S.knobSide;
+  buildPanelRows();
+}
+function buildPanelRows(){
+  const n = S.n; if (S.auto > n-1) S.auto = n-1;
+  let h = '';
+  for (let i=0;i<n;i++){
+    const tag = n===1 ? '' : i===0 ? ' (top)' : i===n-1 ? ' (bottom)' : '';
+    h += `<div class="prow"><label for="ph${i}">Panel ${i+1}${tag}</label>
+      <input type="number" id="ph${i}" inputmode="decimal" value="${S.ph[i]}" ${i===S.auto?'readonly':''}>
+      <label class="auto"><input type="radio" name="auto" value="${i}" ${i===S.auto?'checked':''}>Auto</label></div>`;
+  }
+  $('prows').innerHTML = h;
+}
+function readForm(){
+  NUMS.forEach(k => S[k] = parseFloat($(k).value) || 0);
+  S.build = $('build').value; S.knob = $('knob').checked; S.knobSide = $('knobSide').value;
+  for (let i=0;i<S.n;i++){ if (i!==S.auto){ const el=$('ph'+i); if(el) S.ph[i] = parseFloat(el.value)||0; } }
+  try { localStorage.setItem(KEY, JSON.stringify(S)); } catch(e){}
+}
+
+function compute(){
+  const {H,W,stile,top,mid,bottom,n} = S;
+  const ow = W - 2*stile;
+  const avail = H - top - bottom - (n-1)*mid;
+  let others = 0; for (let i=0;i<n;i++) if (i!==S.auto) others += S.ph[i];
+  const heights = []; for (let i=0;i<n;i++) heights.push(i===S.auto ? avail-others : S.ph[i]);
+  const panels = []; let y = top;
+  heights.forEach((h,i) => { panels.push({i,y,h}); y += h + mid; });
+  const errs = [];
+  if (H<=0 || W<=0) errs.push('Enter a door height and width.');
+  else if (ow <= 0) errs.push('The two stiles are wider than the door. Reduce the stile width.');
+  if (heights[S.auto] <= 0 && H>0) errs.push(`Panels and rails add up to ${f(-heights[S.auto])}mm more than the door height. Reduce a panel or rail.`);
+  return {ow, heights, panels, errs};
+}
+
+// ---------- drawing helpers ----------
+function tick(x,y,t){ return `<line class="dl" vector-effect="non-scaling-stroke" x1="${x-t}" y1="${y+t}" x2="${x+t}" y2="${y-t}"/>`; }
+function chainH(xs, y, ref, fs, labels){
+  const t = fs*0.28, g = fs*0.25, o = fs*0.35, dir = Math.sign(y-ref) || -1;
+  let s = `<line class="dl" vector-effect="non-scaling-stroke" x1="${xs[0]-t}" y1="${y}" x2="${xs[xs.length-1]+t}" y2="${y}"/>`;
+  xs.forEach(x => { s += `<line class="ext" vector-effect="non-scaling-stroke" x1="${x}" y1="${ref+dir*g}" x2="${x}" y2="${y+dir*o}"/>` + tick(x,y,t); });
+  for (let i=0;i<xs.length-1;i++){
+    const lab = labels ? labels[i] : f(xs[i+1]-xs[i]);
+    s += `<text class="dt" x="${(xs[i]+xs[i+1])/2}" y="${y - fs*0.3}" font-size="${fs}" text-anchor="middle">${lab}</text>`;
+  }
+  return s;
+}
+function chainV(ys, x, ref, fs, labels){
+  const t = fs*0.28, g = fs*0.25, o = fs*0.35, dir = Math.sign(x-ref) || -1;
+  let s = `<line class="dl" vector-effect="non-scaling-stroke" x1="${x}" y1="${ys[0]-t}" x2="${x}" y2="${ys[ys.length-1]+t}"/>`;
+  ys.forEach(y => { s += `<line class="ext" vector-effect="non-scaling-stroke" x1="${ref+dir*g}" y1="${y}" x2="${x+dir*o}" y2="${y}"/>` + tick(x,y,t); });
+  for (let i=0;i<ys.length-1;i++){
+    const lab = labels ? labels[i] : f(ys[i+1]-ys[i]);
+    const cy = (ys[i]+ys[i+1])/2, cx = x - fs*0.3;
+    s += `<text class="dt" x="${cx}" y="${cy}" font-size="${fs}" text-anchor="middle" transform="rotate(-90 ${cx} ${cy})">${lab}</text>`;
+  }
+  return s;
+}
+const R = (cls,x,y,w,h) => `<rect class="${cls}" vector-effect="non-scaling-stroke" x="${x}" y="${y}" width="${w}" height="${h}"/>`;
+
+function drawElevation(c){
+  const {H,W,stile:st,top,bottom:bot,mid,mw} = S;
+  const fs = Math.max(14, Math.max(H,W)*0.019);
+  const L = fs*3, Rm = fs*3, T = fs*2.8, B = fs*3;
+  const svg = $('elev');
+  svg.setAttribute('viewBox', `${-L} ${-T} ${W+L+Rm} ${H+T+B}`);
+  let o = R('back',0,0,W,H);
+
+  // stiles and rails
+  const pieces = [];
+  if (S.build === 'stiles'){
+    pieces.push([0,0,st,H],[W-st,0,st,H],[st,0,c.ow,top],[st,H-bot,c.ow,bot]);
+    c.panels.slice(0,-1).forEach(p => pieces.push([st,p.y+p.h,c.ow,mid]));
+  } else {
+    pieces.push([0,0,W,top],[0,H-bot,W,bot]);
+    c.panels.slice(0,-1).forEach(p => pieces.push([0,p.y+p.h,W,mid]));
+    c.panels.forEach(p => pieces.push([0,p.y,st,p.h],[W-st,p.y,st,p.h]));
+  }
+  pieces.forEach(p => o += R('over',...p));
+
+  // moulding and panel labels
+  c.panels.forEach(p => {
+    const x=st, y=p.y, w=c.ow, h=p.h;
+    if (mw > 0 && w > 2*mw && h > 2*mw){
+      o += `<path class="mould" vector-effect="non-scaling-stroke" d="M${x} ${y}h${w}v${h}h${-w}Z M${x+mw} ${y+mw}v${h-2*mw}h${w-2*mw}v${-(h-2*mw)}Z"/>`;
+      const k = mw*0.45;
+      o += R('mline',x+k,y+k,w-2*k,h-2*k).replace('class="mline"','class="mline"');
+      o += `<path class="mitre" vector-effect="non-scaling-stroke" d="M${x} ${y}l${mw} ${mw}M${x+w} ${y}l${-mw} ${mw}M${x} ${y+h}l${mw} ${-mw}M${x+w} ${y+h}l${-mw} ${-mw}"/>`;
+    }
+    if (h > fs*2.5) o += `<text class="pl" x="${x+w/2}" y="${y+h/2+fs*0.35}" font-size="${fs*0.9}" text-anchor="middle">Panel ${p.i+1}</text>`;
+  });
+
+  // knob
+  if (S.knob){
+    const kx = S.knobSide==='right' ? W-st/2 : st/2, ky = H - S.knobH;
+    o += `<circle class="knob" vector-effect="non-scaling-stroke" cx="${kx}" cy="${ky}" r="${Math.min(16, st*0.35)}"/>`;
+  }
+
+  // trim allowance outline (cut size before trimming)
+  const tm = Math.max(0, S.trim||0);
+  if (tm > 0){
+    o += `<rect class="trim" vector-effect="non-scaling-stroke" x="${-tm}" y="${-tm}" width="${W+2*tm}" height="${H+2*tm}"/>`;
+    o += `<text class="tt" x="${W}" y="${H+fs*0.95}" font-size="${fs*0.75}" text-anchor="end">Cut ${f(H+2*tm)} × ${f(W+2*tm)}, trim ${f(tm)} each edge</text>`;
+  }
+
+  // dimensions
+  o += chainH([0,W], -fs*1.7, 0, fs);
+  o += chainH([0,st,W-st,W], H+fs*1.9, H, fs);
+  const ys = [0, top]; c.panels.forEach((p,i) => { ys.push(p.y+p.h); if (i < c.panels.length-1) ys.push(p.y+p.h+mid); });
+  ys[ys.length-1] = H - bot; ys.push(H);
+  o += chainV(ys, W+fs*1.9, W, fs);
+  o += chainV([0,H], -fs*1.7, 0, fs);
+  svg.innerHTML = o;
+
+  $('scaleNote').textContent = S.knob ? `Knob centre ${f(S.knobH)} from bottom, centred on the ${S.knobSide} stile` : '';
+}
+
+function drawSection(){
+  const st=S.stile, mw=S.mw, md = mw>0 ? S.md : 0, ov=S.over, bk=S.back;
+  const end = st + Math.max(mw,0) + 60;
+  const fs = 6.5;
+  const m = Math.max(0, S.trim||0);
+  const yTop = Math.min(0, ov-md);
+  const vx = -m - fs*5, vy = yTop - fs*3.6, vw = end + fs*2 - vx, vh = ov+bk + fs*2 - vy;
+  const svg = $('sect');
+  svg.setAttribute('viewBox', `${vx} ${vy} ${vw} ${vh}`);
+  let o = `<defs><pattern id="hatch" width="3" height="3" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line class="hatchline" x1="0" y1="0" x2="0" y2="3"/></pattern></defs>`;
+  // backboard and stile
+  o += `<rect class="back" vector-effect="non-scaling-stroke" x="${-m}" y="${ov}" width="${end+m}" height="${bk}"/>`;
+  o += `<rect x="${-m}" y="${ov}" width="${end+m}" height="${bk}" fill="url(#hatch)"/>`;
+  o += `<rect class="over" vector-effect="non-scaling-stroke" x="${-m}" y="0" width="${st+m}" height="${ov}"/>`;
+  o += `<rect x="${-m}" y="0" width="${st+m}" height="${ov}" fill="url(#hatch)"/>`;
+  // moulding profile
+  if (mw > 0 && md > 0){
+    const x=st, b=ov, t=ov-md;
+    o += `<path class="mould" vector-effect="non-scaling-stroke" d="M${x} ${b}V${t}H${x+mw*0.25}Q${x+mw*0.55} ${t} ${x+mw*0.55} ${t+md*0.45}Q${x+mw*0.55} ${b} ${x+mw} ${b}Z"/>`;
+  }
+  // break line at the cut end
+  const by0 = Math.min(0,ov-md)-2, by1 = ov+bk+2, z = 2.5;
+  o += `<path class="brk" vector-effect="non-scaling-stroke" d="M${end} ${by0}V${(by0+by1)/2 - z*1.5}l${z} ${z}l${-2*z} ${z}l${z} ${z}V${by1}"/>`;
+  if (m > 0){
+    o += `<line class="trim" vector-effect="non-scaling-stroke" x1="0" y1="${by0-3}" x2="0" y2="${by1+3}"/>`;
+    o += `<text class="tt" x="0" y="${by1+fs*1.4}" font-size="${fs*0.85}" text-anchor="middle">Trim line</text>`;
+  }
+  // labels
+  o += `<text class="pl" x="${(st+end)/2 + (mw>0?mw/2:0)}" y="${ov+bk/2+fs*0.35}" font-size="${fs}" text-anchor="middle">Backboard</text>`;
+  if (ov >= fs*1.1) o += `<text class="pl" x="${st/2}" y="${ov/2+fs*0.35}" font-size="${fs*0.9}" text-anchor="middle">Stile</text>`;
+  // dims
+  o += chainV([0,ov,ov+bk], -m-fs*1.6, -m, fs);
+  o += chainV([yTop, ov+bk], -m-fs*3.7, -m, fs);
+  const xs = (m>0 ? [-m] : []).concat(mw>0 ? [0,st,st+mw] : [0,st]);
+  o += chainH(xs, yTop - fs*1.8, yTop, fs);
+  svg.innerHTML = o;
+}
+
+function cuttingList(c){
+  const {H,W,back:bk,over:ov,stile:st,top,mid,bottom:bot,n,mw,md} = S;
+  const rows = [];
+  rows.push(['g','Backboard']);
+  const t = Math.max(0, S.trim||0);
+  rows.push(['Backboard',1,H+2*t,W+2*t,bk]);
+  rows.push(['g','Stiles and rails']);
+  if (S.build === 'stiles'){
+    rows.push(['Stile',2,H+2*t,st+t,ov]);
+    rows.push(['Top rail',1,c.ow,top+t,ov]);
+    if (n>1) rows.push(['Middle rail',n-1,c.ow,mid,ov]);
+    rows.push(['Bottom rail',1,c.ow,bot+t,ov]);
+  } else {
+    rows.push(['Top rail',1,W+2*t,top+t,ov]);
+    if (n>1) rows.push(['Middle rail',n-1,W+2*t,mid,ov]);
+    rows.push(['Bottom rail',1,W+2*t,bot+t,ov]);
+    const m = new Map(); c.heights.forEach(h => m.set(h,(m.get(h)||0)+2));
+    m.forEach((q,h) => rows.push(['Stile between rails',q,h,st+t,ov]));
+  }
+  let run = 0;
+  if (mw > 0){
+    rows.push(['g','Moulding (long point, mitred)']);
+    const m = new Map();
+    c.heights.forEach(h => { m.set(h,(m.get(h)||0)+2); m.set(c.ow,(m.get(c.ow)||0)+2); run += 2*h + 2*c.ow; });
+    [...m.entries()].sort((a,b)=>b[0]-a[0]).forEach(([len,q]) => rows.push(['Moulding',q,len,mw,md]));
+  }
+  $('cut').innerHTML = rows.map(r => r[0]==='g'
+    ? `<tr class="group"><td colspan="5">${r[1]}</td></tr>`
+    : `<tr><td>${r[0]}</td><td>${r[1]}</td><td>${f(r[2])}</td><td>${f(r[3])}</td><td>${f(r[4])}</td></tr>`).join('');
+  const notes = [];
+  if (t > 0) notes.push(`Outer edges include ${f(t)}mm trim allowance each side. Trim the glued door back to ${f(H)} × ${f(W)}.`);
+  if (mw > 0) notes.push(`Moulding total ${f(run/1000)}m, or about ${f(Math.ceil(run*1.1/100)/10)}m with 10% for mitres and offcuts.`);
+  $('mnote').textContent = notes.join(' ');
+}
+
+function render(){
+  readForm();
+  const c = compute();
+  const e = $('err');
+  const ai = $('ph'+S.auto); if (ai) ai.value = f(c.heights[S.auto]);
+  if (c.errs.length){ e.textContent = c.errs.join(' '); e.classList.add('on'); }
+  else { e.classList.remove('on'); }
+  if (c.errs.length) return;
+  drawElevation(c); drawSection(); cuttingList(c);
+  $('stats').innerHTML =
+    `<div>Finished thickness <b>${f(S.back+S.over)}</b></div>
+     <div>Recess width <b>${f(c.ow)}</b></div>
+     <div>Recess depth <b>${f(S.over)}</b></div>
+     <div>Cut before trim <b>${f(S.H+2*Math.max(0,S.trim||0))} × ${f(S.W+2*Math.max(0,S.trim||0))}</b></div>`;
+}
+
+$('form').addEventListener('input', e => {
+  if (e.target.name === 'auto') return;
+  if (e.target.id === 'n'){ readForm(); S.n = parseInt($('n').value); buildPanelRows(); }
+  render();
+});
+$('form').addEventListener('change', e => {
+  if (e.target.name === 'auto'){ readForm(); S.auto = parseInt(e.target.value); buildPanelRows(); render(); }
+  if (e.target.id === 'n'){ S.n = parseInt($('n').value); buildPanelRows(); render(); }
+});
+$('reset').addEventListener('click', () => { S = Object.assign({}, DEF, {ph: DEF.ph.slice()}); fillForm(); render(); });
+
+fillForm(); render();
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => { navigator.serviceWorker.register('../sw.js').catch(() => {}); });
+}
+</script>
+</body>
+</html>
