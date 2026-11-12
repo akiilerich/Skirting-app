@@ -92,6 +92,12 @@ tr.group td{font:600 15px "Barlow Condensed",sans-serif;text-align:left;padding-
 .btns{display:flex;gap:8px;flex-wrap:wrap}
 button{font:500 14px Barlow,sans-serif;color:var(--ink);background:var(--paper);border:1px solid var(--rule);border-radius:4px;padding:7px 12px;cursor:pointer}
 .note{font-size:13px;color:var(--muted);margin:10px 0 0}
+.stkd{font-size:14px}
+.stkd h4{font:600 16px "Barlow Condensed","Arial Narrow",sans-serif;margin:14px 0 4px}
+.stkd ul{margin:0;padding-left:18px}
+.stkd li{margin:3px 0}
+.stkd li ul{margin-top:2px;color:var(--muted)}
+.stkd .bad{color:var(--err);background:var(--errbg);border-radius:4px;padding:8px 10px;margin:6px 0 0;font-weight:500}
 @media print{
   .inputs,.btns,header p{display:none}
   body{background:#fff}
@@ -150,6 +156,17 @@ button{font:500 14px Barlow,sans-serif;color:var(--ink);background:var(--paper);
     </fieldset>
 
     <fieldset>
+      <legend>Stock sizes</legend>
+      <div class="row"><label for="bbL">Backboard board length</label><input type="number" id="bbL" inputmode="decimal"></div>
+      <div class="row"><label for="bbW">Backboard board width</label><input type="number" id="bbW" inputmode="decimal"></div>
+      <div class="row"><label for="srL">Stile and rail board length</label><input type="number" id="srL" inputmode="decimal"></div>
+      <div class="row"><label for="srW">Stile and rail board width</label><input type="number" id="srW" inputmode="decimal"></div>
+      <div class="row"><label for="mL">Moulding length</label><input type="number" id="mL" inputmode="decimal"></div>
+      <div class="row"><label for="kerf">Saw cut allowance</label><input type="number" id="kerf" inputmode="decimal"></div>
+      <p class="hint">The sizes of the boards and moulding lengths you hold. The Stock to issue section below works out how many you need. The allowance is lost to the saw between every piece.</p>
+    </fieldset>
+
+    <fieldset>
       <legend>Knob</legend>
       <label class="chk"><input type="checkbox" id="knob"> Show knob</label>
       <div class="row"><label for="knobH">Centre from bottom</label><input type="number" id="knobH" inputmode="decimal"></div>
@@ -186,12 +203,24 @@ button{font:500 14px Barlow,sans-serif;color:var(--ink);background:var(--paper);
       </div>
       <p class="note" id="mnote"></p>
     </figure>
+
+    <figure>
+      <figcaption>Stock to issue <span>Worked out from the stock sizes entered</span></figcaption>
+      <div class="tablewrap">
+        <table>
+          <thead><tr><th>Material</th><th>Stock size</th><th>Qty</th><th>Used</th></tr></thead>
+          <tbody id="stockRows"></tbody>
+        </table>
+      </div>
+      <div class="stkd" id="stockDetail"></div>
+      <p class="note" id="stockNote"></p>
+    </figure>
   </div>
 </div>
 
 <script>
 const KEY = 'overlay-door-v1';
-const DEF = {H:2100,W:500,back:18,over:12,trim:5,build:'stiles',stile:70,top:75,mids:[75,75,75,75],bottom:150,n:3,ph:[330,900,500,400,400],auto:1,mw:20,md:12,knob:true,knobH:1000,knobSide:'right'};
+const DEF = {H:2100,W:500,back:18,over:12,trim:5,build:'stiles',stile:70,top:75,mids:[75,75,75,75],bottom:150,n:3,ph:[330,900,500,400,400],auto:1,mw:20,md:12,knob:true,knobH:1000,knobSide:'right',bbL:2440,bbW:1220,srL:2440,srW:1220,mL:2400,kerf:3};
 let S;
 let saved = {};
 try { saved = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch(e){ saved = {}; }
@@ -204,7 +233,7 @@ S.mids = S.mids.slice(0, 4);
 delete S.mid;
 
 const $ = id => document.getElementById(id);
-const NUMS = ['H','W','back','over','trim','stile','top','bottom','mw','md','knobH'];
+const NUMS = ['H','W','back','over','trim','stile','top','bottom','mw','md','knobH','bbL','bbW','srL','srW','mL','kerf'];
 const f = v => { const r = Math.round(v*10)/10; return String(r); };
 
 function fillForm(){
@@ -414,6 +443,94 @@ function cuttingList(c){
   if (t > 0) notes.push(`Outer edges include ${f(t)}mm trim allowance each side. Trim the glued door back to ${f(H)} × ${f(W)}.`);
   if (mw > 0) notes.push(`Moulding total ${f(run/1000)}m, or about ${f(Math.ceil(run*1.1/100)/10)}m with 10% for mitres and offcuts.`);
   $('mnote').textContent = notes.join(' ');
+  const parts = {back:[], rail:[], mould:[]};
+  let cat = '';
+  rows.forEach(r => {
+    if (r[0]==='g'){ cat = r[1]==='Backboard' ? 'back' : r[1]==='Stiles and rails' ? 'rail' : 'mould'; return; }
+    for (let i=0;i<r[1];i++) parts[cat].push({name:r[0], len:r[2], wid:r[3]});
+  });
+  return parts;
+}
+
+// ---------- stock to issue ----------
+// Boards: pieces are ripped into strips along the board, strips of one width are filled end to end,
+// then the strips are stacked across the board width. A piece is turned 90 degrees only if it cannot
+// go the other way (check the grain if that matters). The saw allowance is lost between every piece.
+function packBoards(pieces, L, W, kerf){
+  if (!(L>0 && W>0)) return {err:'Enter the board length and width.'};
+  const placed = [];
+  for (const p of pieces){
+    let a = p.len, b = p.wid;
+    if (!(a<=L && b<=W)){
+      if (b<=L && a<=W){ const t=a; a=b; b=t; }
+      else return {err:`${p.name} (${f(p.len)} \u00d7 ${f(p.wid)}) does not fit a ${f(L)} \u00d7 ${f(W)} board.`};
+    }
+    placed.push({name:p.name, a, b});
+  }
+  const byW = new Map();
+  placed.forEach(p => { if (!byW.has(p.b)) byW.set(p.b, []); byW.get(p.b).push(p); });
+  const strips = [];
+  [...byW.entries()].sort((x,y) => y[0]-x[0]).forEach(([b,list]) => {
+    list.sort((x,y) => y.a-x.a);
+    const bins = [];
+    list.forEach(p => {
+      let bin = bins.find(s => s.used + p.a <= L);
+      if (!bin){ bin = {b, items:[], used:0}; bins.push(bin); }
+      bin.items.push(p); bin.used += p.a + kerf;
+    });
+    strips.push(...bins);
+  });
+  strips.sort((x,y) => y.b-x.b);
+  const boards = [];
+  strips.forEach(st => {
+    let bd = boards.find(x => x.used + st.b <= W);
+    if (!bd){ bd = {strips:[], used:0}; boards.push(bd); }
+    bd.strips.push(st); bd.used += st.b + kerf;
+  });
+  const area = placed.reduce((a,p) => a + p.a*p.b, 0);
+  return {boards, used: area / (L*W*boards.length)};
+}
+function packLengths(pieces, L, kerf){
+  if (!(L>0)) return {err:'Enter the moulding length.'};
+  const long = pieces.find(p => p.len > L);
+  if (long) return {err:`A moulding piece of ${f(long.len)} is longer than the ${f(L)} stock length.`};
+  const bins = [];
+  pieces.slice().sort((x,y) => y.len-x.len).forEach(p => {
+    let bin = bins.find(b => b.used + p.len <= L);
+    if (!bin){ bin = {items:[], used:0}; bins.push(bin); }
+    bin.items.push(p); bin.used += p.len + kerf;
+  });
+  const total = pieces.reduce((a,p) => a + p.len, 0);
+  return {bins, used: total / (L*bins.length), total};
+}
+function stockPlan(parts){
+  const k = Math.max(0, S.kerf||0);
+  const rowsOut = [], detail = [];
+  const pct = u => Math.round(u*100) + '%';
+  const boardBlock = (title, thick, res, L, W) => {
+    if (res.err){
+      rowsOut.push(`<tr><td>${title}</td><td colspan="3" style="text-align:left;white-space:normal">${res.err}</td></tr>`);
+      return;
+    }
+    rowsOut.push(`<tr><td>${title}</td><td>${f(L)} \u00d7 ${f(W)} \u00d7 ${f(thick)}</td><td>${res.boards.length}</td><td>${pct(res.used)}</td></tr>`);
+    detail.push(`<h4>${title}</h4><ul>` + res.boards.map((bd,i) =>
+      `<li>Board ${i+1}<ul>` + bd.strips.map(st =>
+        `<li>${f(st.b)} wide strip: ${st.items.map(p => p.name + ' ' + f(p.a)).join(' + ')}</li>`).join('') + '</ul></li>').join('') + '</ul>');
+  };
+  boardBlock('Backboard', S.back, packBoards(parts.back, S.bbL, S.bbW, k), S.bbL, S.bbW);
+  boardBlock('Stiles and rails', S.over, packBoards(parts.rail, S.srL, S.srW, k), S.srL, S.srW);
+  if (S.mw > 0 && parts.mould.length){
+    const res = packLengths(parts.mould, S.mL, k);
+    if (res.err) rowsOut.push(`<tr><td>Moulding</td><td colspan="3" style="text-align:left;white-space:normal">${res.err}</td></tr>`);
+    else {
+      rowsOut.push(`<tr><td>Moulding</td><td>${f(S.mL)} \u00d7 ${f(S.mw)} \u00d7 ${f(S.md)}</td><td>${res.bins.length}</td><td>${pct(res.used)}</td></tr>`);
+      detail.push('<h4>Moulding</h4><ul>' + res.bins.map((b,i) =>
+        `<li>Length ${i+1}: ${b.items.map(p => f(p.len)).join(' + ')}</li>`).join('') + '</ul>');
+    }
+  }
+  $('stockRows').innerHTML = rowsOut.join('');
+  $('stockDetail').innerHTML = detail.join('');
+  $('stockNote').textContent = 'Sizes are length \u00d7 width \u00d7 thickness, in mm. Used is the share of the stock that ends up in the door; the rest is offcut and saw cuts. Moulding is cut to the long-point lengths in the cutting list, so allow a little extra for mitre waste.';
 }
 
 function render(){
@@ -424,7 +541,7 @@ function render(){
   if (c.errs.length){ e.textContent = c.errs.join(' '); e.classList.add('on'); }
   else { e.classList.remove('on'); }
   if (c.errs.length) return;
-  drawElevation(c); drawSection(); cuttingList(c);
+  drawElevation(c); drawSection(); stockPlan(cuttingList(c));
   $('stats').innerHTML =
     `<div>Finished thickness <b>${f(S.back+S.over)}</b></div>
      <div>Recess width <b>${f(c.ow)}</b></div>
