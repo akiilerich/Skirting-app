@@ -1,4 +1,4 @@
-const CACHE_NAME = 'carpentry-app-v6';
+const CACHE_NAME = 'carpentry-app-v7';
 const CORE_ASSETS = [
   './',
   './index.html',
