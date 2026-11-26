@@ -196,6 +196,34 @@
   .gloss dt{font-weight:700;font-family:'SF Mono',ui-monospace,Menlo,monospace;font-size:13px;}
   .gloss dd{margin:0;color:#c8ced8;}
 
+  /* floor plan tab */
+  .pfloors{padding-top:0;margin-top:2px;}
+  .pv{position:relative;height:62vh;height:62dvh;min-height:340px;margin-top:10px;overflow:hidden;background:#fff;
+      border:1px solid var(--line);border-radius:12px;touch-action:none;user-select:none;-webkit-user-select:none;cursor:grab;}
+  .pw{position:absolute;left:0;top:0;transform-origin:0 0;}
+  .pw img{display:block;max-width:none;pointer-events:none;-webkit-user-drag:none;}
+  .pm{position:absolute;width:34px;height:34px;margin:0;padding:0;border:none;background:none;cursor:pointer;
+      transform:translate(-50%,-50%) scale(calc(1 / var(--z,1)));-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none;}
+  .pm i{position:absolute;left:50%;top:50%;width:15px;height:15px;margin:-7.5px 0 0 -7.5px;border-radius:50%;
+        background:#12b3a6;border:2.5px solid #fff;box-shadow:0 0 0 1.5px #0b6f66;}
+  .pm.ab i{background:#f5b342;box-shadow:0 0 0 1.5px #9a6a0c;}
+  .pm.off i{background:#fff;border:2px solid #8b93a1;box-shadow:none;}
+  .pm span{display:none;position:absolute;left:24px;top:50%;transform:translateY(-50%);background:rgba(11,13,16,.9);color:#fff;
+           font:600 11px/1 'Inter','Segoe UI',system-ui,sans-serif;padding:4px 5px;border-radius:4px;white-space:nowrap;pointer-events:none;}
+  .pv.lab .pm span{display:block;}
+  .pm.pf{z-index:2;}
+  .pm.pf span{display:block;background:#e0245e;}
+  .pm.pf i{background:#e0245e;box-shadow:0 0 0 1.5px #8c0f35;animation:pulse 1.4s ease-out 3;}
+  @keyframes pulse{0%{box-shadow:0 0 0 1.5px #8c0f35,0 0 0 0 rgba(224,36,94,.7);}100%{box-shadow:0 0 0 1.5px #8c0f35,0 0 0 18px rgba(224,36,94,0);}}
+  .pctl{position:absolute;right:8px;top:8px;display:flex;flex-direction:column;gap:6px;z-index:5;}
+  .pctl button{width:42px;height:42px;border-radius:10px;background:rgba(21,24,29,.92);border:1px solid var(--line-2);color:var(--text);font-size:20px;font-weight:600;cursor:pointer;}
+  .pctl button.fit{font-size:12px;}
+  .plegend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12px;color:var(--muted);margin:10px 2px 0;}
+  .plegend b{display:inline-block;width:11px;height:11px;border-radius:50%;vertical-align:-1px;margin-right:5px;box-sizing:border-box;}
+  .miss{margin-top:16px;}
+  .miss .opts{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;}
+  .more{width:100%;margin-top:10px;padding:12px;border-radius:10px;background:var(--bg);border:1px solid var(--accent);color:var(--accent);font-weight:600;font-size:14px;cursor:pointer;}
+
   /* bottom tabs */
   nav.tabs{
     position:fixed;left:0;right:0;bottom:0;z-index:6;background:rgba(11,13,16,.96);
@@ -260,6 +288,7 @@
       <div id="list"></div>
     </section>
 
+    <section id="tab-plan" hidden></section>
     <section id="tab-overview" hidden></section>
     <section id="tab-notes" hidden></section>
 
@@ -273,6 +302,9 @@
 <nav class="tabs" id="tabs"><div>
   <button data-tab="doors" class="on" type="button">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="3" width="12" height="18" rx="1"/><circle cx="14.5" cy="12.5" r=".8" fill="currentColor"/></svg>Doors
+  </button>
+  <button data-tab="plan" type="button">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2z"/><line x1="9" y1="4" x2="9" y2="18"/><line x1="15" y1="6" x2="15" y2="20"/></svg>Plan
   </button>
   <button data-tab="overview" type="button">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="5" y1="20" x2="5" y2="11"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="19" y1="20" x2="19" y2="14"/></svg>Overview
@@ -347,6 +379,7 @@
   ];
   var state = {q:'', floor:'', area:'', fire:'', kind:'', cond:'', status:'', pinned:''};
   var current = [];   // doors currently listed, in order
+  var navList = null; // set when a door is opened from the floor plan
 
   function matches(d){
     if (state.floor && d.floor !== state.floor) return false;
@@ -511,6 +544,7 @@
         : 'Read off the plan drawing and checked against the scheduled leaf width. Confirm on site.') + '</small></p>' : '') +
       '<div class="plan' + (planWide ? ' wide' : '') + '" id="dPlan" role="button" aria-label="Plan around this door. Tap to zoom ' + (planWide ? 'in' : 'out') + '">' +
         '<img src="' + esc(fl.src) + '" alt="Plan drawing around door ' + esc(d.ref) + '" style="' + css + '"><span class="ring"></span></div>' +
+      '<button type="button" class="more" id="dOnPlan">Show on the full floor plan</button>' +
       '<p class="fine">Tap the plan to zoom ' + (planWide ? 'in' : 'out') + '. Drawing ' + esc(fl.drawing) + ' rev ' + esc(fl.rev) +
         (sw ? '' : ' — swing not confirmed automatically for this door, read it from the drawing') + '.</p></div>';
   }
@@ -518,8 +552,9 @@
   function showDoor(id, keepScroll){
     var d = DOORS[id];
     if (!d){ closeDoor(); return; }
-    var pos = current.indexOf(d);
-    var prev = pos > 0 ? current[pos - 1] : null, next = pos >= 0 && pos < current.length - 1 ? current[pos + 1] : null;
+    var list = (navList && navList.indexOf(d) >= 0) ? navList : current;   // from the plan, step through that floor's doors
+    var pos = list.indexOf(d);
+    var prev = pos > 0 ? list[pos - 1] : null, next = pos >= 0 && pos < list.length - 1 ? list[pos + 1] : null;
     var pinned = !!pins[pinKey(d)];
     var h = '<div class="d-head"><div class="d-top">' +
       '<button type="button" class="icon-btn" id="dBack" aria-label="Back to list">‹</button>' +
@@ -696,18 +731,164 @@
     var m = S.meta;
     return 'Source: ' + (m.docRef || 'door schedule') + ' · Rev ' + (m.rev || '?') + ' · ' + (m.status || '') + ' · ' + (m.date || '');
   }
+  /* ---------- floor plan: the whole floor, tap a door ---------- */
+  var planFloors = FLOORS.filter(function(f){ return PLANS.floors[f]; });
+  var pv = {floor:'', built:'', k:1, k0:1, tx:0, ty:0};
+  var pendingFocus = null;
+  function planDoorsOn(floor){
+    return DOORS.filter(function(d){ var pd = d.ref && PLANS.doors[d.ref]; return pd && pd.f === floor; });
+  }
+  function pvSize(){ var v = $('pv'); return {w: v.clientWidth, h: v.clientHeight}; }
+  function clampPlan(){
+    var fl = PLANS.floors[pv.floor], sz = pvSize(), W = fl.w * pv.k, H = fl.h * pv.k;
+    pv.tx = W <= sz.w ? (sz.w - W) / 2 : Math.min(0, Math.max(sz.w - W, pv.tx));
+    pv.ty = H <= sz.h ? (sz.h - H) / 2 : Math.min(0, Math.max(sz.h - H, pv.ty));
+  }
+  function applyPlan(){
+    clampPlan();
+    var w = $('pw');
+    w.style.transform = 'translate(' + pv.tx + 'px,' + pv.ty + 'px) scale(' + pv.k + ')';
+    w.style.setProperty('--z', pv.k);
+    $('pv').classList.toggle('lab', pv.k / pv.k0 >= 3.2);      // door numbers appear once zoomed in
+  }
+  function fitPlan(){
+    var fl = PLANS.floors[pv.floor], sz = pvSize();
+    pv.k0 = Math.min(sz.w / fl.w, sz.h / fl.h) * 0.98;
+    pv.k = pv.k0; pv.tx = 0; pv.ty = 0;
+    applyPlan();
+  }
+  function zoomAt(factor, cx, cy){
+    var nk = Math.max(pv.k0, Math.min(pv.k0 * 14, pv.k * factor)), r = nk / pv.k;
+    pv.tx = cx - (cx - pv.tx) * r; pv.ty = cy - (cy - pv.ty) * r; pv.k = nk;
+    applyPlan();
+  }
+  function focusOnPlan(id){
+    var d = DOORS[id], pd = d && d.ref && PLANS.doors[d.ref], fl = pd && PLANS.floors[pd.f];
+    if (!fl) return;
+    var sz = pvSize();
+    pv.k = Math.max(pv.k0, Math.min(pv.k0 * 14, Math.min(sz.w, sz.h) / 170));
+    pv.tx = sz.w / 2 - (pd.x - fl.x) * pv.k; pv.ty = sz.h / 2 - (pd.y - fl.y) * pv.k;
+    applyPlan();
+    Array.prototype.forEach.call(document.querySelectorAll('.pm.pf'), function(m){ m.classList.remove('pf'); });
+    var m = document.querySelector('.pm[data-id="' + id + '"]'); if (m) m.classList.add('pf');
+  }
+  function renderPlanTab(){
+    var sec = $('tab-plan');
+    if (!planFloors.length){ sec.innerHTML = '<div class="empty">No floor plans are loaded.</div>'; return; }
+    if (!pv.floor) pv.floor = planFloors.indexOf('Ground Floor') >= 0 ? 'Ground Floor' : planFloors[0];
+    var fl = PLANS.floors[pv.floor], doors = planDoorsOn(pv.floor);
+    var chips = planFloors.map(function(f){
+      return '<button type="button" class="chip' + (f === pv.floor ? ' on' : '') + '" data-pf="' + esc(f) + '">' + esc(f.replace(' Floor', '')) + '</button>';
+    }).join('');
+    var marks = doors.slice().sort(function(a, b){ return (a.off ? 0 : 1) - (b.off ? 0 : 1); }).map(function(d){
+      var pd = PLANS.doors[d.ref];
+      var cls = d.off ? 'off' : d.status === 'abeyance' ? 'ab' : 'live';
+      return '<button type="button" class="pm ' + cls + '" data-id="' + d.id + '" style="left:' + (pd.x - fl.x).toFixed(1) + 'px;top:' + (pd.y - fl.y).toFixed(1) +
+        'px" aria-label="Door ' + esc(d.ref) + ', ' + esc(d.loc || '') + '"><i></i><span>' + esc(d.ref) + '</span></button>';
+    }).join('');
+    var miss = DOORS.filter(function(d){ return d.floor === pv.floor && d.ref && !PLANS.doors[d.ref]; });
+    sec.innerHTML =
+      '<div class="chips pfloors" id="pfloors">' + chips + '</div>' +
+      '<div class="pv" id="pv"><div class="pw" id="pw" style="width:' + fl.w + 'px;height:' + fl.h + 'px">' +
+        '<img src="' + esc(fl.src) + '" width="' + fl.w + '" height="' + fl.h + '" alt="' + esc(pv.floor) + ' plan" draggable="false">' + marks + '</div>' +
+        '<div class="pctl"><button type="button" data-z="in" aria-label="Zoom in">+</button><button type="button" data-z="out" aria-label="Zoom out">−</button><button type="button" class="fit" data-z="fit" aria-label="Fit whole floor">Fit</button></div></div>' +
+      '<div class="plegend"><span><b style="background:#12b3a6"></b>Live</span><span><b style="background:#f5b342"></b>In abeyance</span>' +
+        '<span><b style="border:2px solid #8b93a1"></b>Omitted / demolished</span></div>' +
+      '<p class="fine">' + doors.length + ' doors marked on this plan. Tap a door to open it; pinch or use + / − to zoom in, drag to move around. ' +
+        'Drawing ' + esc(fl.drawing) + ' rev ' + esc(fl.rev) + '.</p>' +
+      (miss.length ? '<div class="card miss"><h2>In the schedule, not tagged on this drawing (' + miss.length + ')</h2><div class="opts">' +
+        miss.map(function(d){ return '<button type="button" class="chip' + (d.off ? '' : ' on') + '" data-mid="' + d.id + '" style="' + (d.off ? '' : 'background:var(--panel-2);color:var(--text);border-color:var(--line-2)') + '">' + esc(d.ref) + '</button>'; }).join('') +
+        '</div></div>' : '');
+    pv.built = pv.floor;
+    fitPlan();
+  }
+  function showPlanFor(id){
+    var d = DOORS[id], pd = d && d.ref && PLANS.doors[d.ref];
+    if (!pd) return;
+    pv.floor = pd.f;
+    showTab('plan');
+    if (pv.built !== pv.floor) renderPlanTab();
+    focusOnPlan(id);
+  }
+  // drag to pan, pinch to zoom; a tap (no real movement) falls through to the marker's click
+  var ptrs = {}, gest = null;
+  function ptrPos(e){ var r = $('pv').getBoundingClientRect(); return {x: e.clientX - r.left, y: e.clientY - r.top}; }
+  function startGesture(){
+    var ids = Object.keys(ptrs);
+    if (ids.length === 1) gest = {t:'pan', sx:ptrs[ids[0]].x, sy:ptrs[ids[0]].y, tx:pv.tx, ty:pv.ty, moved:false};
+    else if (ids.length >= 2){
+      var a = ptrs[ids[0]], b = ptrs[ids[1]], cx = (a.x + b.x) / 2, cy = (a.y + b.y) / 2;
+      gest = {t:'pinch', d:Math.max(10, Math.hypot(a.x - b.x, a.y - b.y)), k:pv.k, px:(cx - pv.tx) / pv.k, py:(cy - pv.ty) / pv.k};
+    } else gest = null;
+  }
+  var tabPlan = $('tab-plan');
+  tabPlan.addEventListener('pointerdown', function(e){
+    if (!e.target.closest('#pv') || e.target.closest('.pctl')) return;
+    ptrs[e.pointerId] = ptrPos(e); startGesture();
+  });
+  tabPlan.addEventListener('pointermove', function(e){
+    if (!(e.pointerId in ptrs) || !gest) return;
+    ptrs[e.pointerId] = ptrPos(e);
+    var ids = Object.keys(ptrs);
+    if (gest.t === 'pan' && ids.length === 1){
+      var p = ptrs[ids[0]], dx = p.x - gest.sx, dy = p.y - gest.sy;
+      if (!gest.moved && Math.hypot(dx, dy) < 7) return;
+      if (!gest.moved){ gest.moved = true; try { $('pv').setPointerCapture(e.pointerId); } catch(err){} }
+      pv.tx = gest.tx + dx; pv.ty = gest.ty + dy; applyPlan();
+    } else if (gest.t === 'pinch' && ids.length >= 2){
+      var a = ptrs[ids[0]], b = ptrs[ids[1]], cx = (a.x + b.x) / 2, cy = (a.y + b.y) / 2;
+      pv.k = Math.max(pv.k0, Math.min(pv.k0 * 14, gest.k * Math.hypot(a.x - b.x, a.y - b.y) / gest.d));
+      pv.tx = cx - gest.px * pv.k; pv.ty = cy - gest.py * pv.k; applyPlan();
+    }
+  });
+  function endPointer(e){
+    if (!(e.pointerId in ptrs)) return;
+    delete ptrs[e.pointerId]; startGesture();
+    if (gest && gest.t === 'pan') gest.moved = true;       // the finger left over after a pinch must not count as a tap
+  }
+  tabPlan.addEventListener('pointerup', endPointer);
+  tabPlan.addEventListener('pointercancel', endPointer);
+  tabPlan.addEventListener('wheel', function(e){
+    if (!e.target.closest('#pv')) return;
+    e.preventDefault();
+    var p = ptrPos(e); zoomAt(e.deltaY < 0 ? 1.25 : 0.8, p.x, p.y);
+  }, {passive:false});
+  tabPlan.addEventListener('click', function(e){
+    var c = e.target.closest('[data-pf]');
+    if (c){ pv.floor = c.getAttribute('data-pf'); renderPlanTab(); return; }
+    var z = e.target.closest('[data-z]');
+    if (z){
+      var sz = pvSize(), k = z.getAttribute('data-z');
+      if (k === 'fit') fitPlan(); else zoomAt(k === 'in' ? 1.6 : 1 / 1.6, sz.w / 2, sz.h / 2);
+      return;
+    }
+    var m = e.target.closest('.pm');
+    if (m){ navList = planDoorsOn(pv.floor); openDoor(+m.getAttribute('data-id')); return; }
+    var x = e.target.closest('[data-mid]');
+    if (x){ navList = null; openDoor(+x.getAttribute('data-mid')); }
+  });
+  window.addEventListener('resize', function(){
+    if (!$('pv') || $('tab-plan').hidden) return;
+    var wasFit = Math.abs(pv.k - pv.k0) < 1e-6;
+    if (wasFit) fitPlan(); else applyPlan();
+  });
+
   function showTab(name){
-    ['doors','overview','notes'].forEach(function(t){ $('tab-' + t).hidden = t !== name; });
+    ['doors','plan','overview','notes'].forEach(function(t){ $('tab-' + t).hidden = t !== name; });
     Array.prototype.forEach.call($('tabs').querySelectorAll('button'), function(b){
       b.classList.toggle('on', b.getAttribute('data-tab') === name);
     });
+    if (name === 'plan' && pv.built !== pv.floor || (name === 'plan' && !$('pv'))) renderPlanTab();
     window.scrollTo(0, 0);
   }
   var listScroll = 0;
   function route(){
     var m = /^#door\/(\d+)$/.exec(location.hash);
     if (m){ planWide = false; showDoor(+m[1]); }
-    else { closeDoor(); renderList(); window.scrollTo(0, listScroll); }
+    else {
+      closeDoor(); renderList(); window.scrollTo(0, listScroll);
+      if (pendingFocus !== null){ var id = pendingFocus; pendingFocus = null; showPlanFor(id); }
+    }
   }
   function openDoor(id, replace){
     if (replace) location.replace('#door/' + id);
@@ -728,7 +909,7 @@
     state.floor = b.getAttribute('data-floor'); renderList(); window.scrollTo(0, 0);
   });
   $('list').addEventListener('click', function(e){
-    var b = e.target.closest('.door'); if (b) openDoor(+b.getAttribute('data-id'));
+    var b = e.target.closest('.door'); if (b){ navList = null; openDoor(+b.getAttribute('data-id')); }
   });
   $('detail').addEventListener('click', function(e){
     if (e.target.closest('#dPlan')){
@@ -737,6 +918,7 @@
       return;
     }
     var b = e.target.closest('button'); if (!b) return;
+    if (b.id === 'dOnPlan'){ pendingFocus = +(/(\d+)$/.exec(location.hash) || [])[1]; location.hash = ''; return; }
     if (b.id === 'dBack'){ if (history.length > 1) history.back(); else location.hash = ''; }
     else if (b.id === 'dPin'){
       var d = DOORS[+(/(\d+)$/.exec(location.hash) || [])[1]]; if (!d) return;
